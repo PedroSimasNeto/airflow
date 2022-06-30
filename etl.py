@@ -28,15 +28,19 @@ class jobs:
 
         try:
             for d2 in dado:
+                print("Condomínio:", d2)
                 for d1 in data:
                     data_periodo = d1.strftime("%d/%m/%Y")
                     url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
                     response = requests.request("GET", url_completa, headers=self.header_job)
                     if response.status_code and response.status_code == 200:
-                        if response.json():
-                            dado_list.extend(response.json()[0]["itens"])
+                        response_json = response.json()
+                        if response_json:
+                            for item in response_json[0]["itens"]:
+                                item[0]["data"] = d1.strftime("%Y-%m-%d")
+                                dado_list.extend(item)
         except Exception as ex:
-            print(f"ERRO! Motivo: {ex}")
+            raise print(f"ERRO! Motivo: {ex}")
 
         df_relatorio_receita_despesa = pd.DataFrame(dado_list)
         connection = ut.obter_conn_uri(self.database_job)

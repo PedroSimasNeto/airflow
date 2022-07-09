@@ -37,12 +37,14 @@ class jobs:
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
         data = pd.date_range(data_inicio, data_fim, freq="D")
+        print(f"Reprocessando entre os dias {data_inicio} a {data_fim}")
 
         # Criado lista que será preenchida com os dados da API
         dado_list = list()
 
         # Query que busca no banco de dados os condomínios cadastrados para buscar na API.
         dado = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from condominio;")[0][0]
+        print(f"Será processados {len(dado)} condomínios")
 
         try:
             for d2 in dado:

@@ -30,11 +30,11 @@ class jobs:
         print(f"Truncate na tabela {connection['schema']}")
         ut.truncate_pgsql(self.database_job, table)
 
-        print(f"Inserindo dados na tabela {connection['schema']}")
+        print(f"Inserindo dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_condominio.to_sql(table, engine, if_exists="append", index=False)
 
-    def relatorio_receita_despesa(self, table: str, data_execucao: datetime, intervalo_execucao: int):
+    def st_relatorio_receita_despesa(self, table: str, data_execucao: datetime, intervalo_execucao: int):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
@@ -59,6 +59,7 @@ class jobs:
                         if response_json:
                             for item in response_json[0]["itens"]:
                                 item[0]["data"] = d1.strftime("%Y-%m-%d")
+                                item[0]["id_condominio"] = d2
                                 dado_list.extend(item)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")
@@ -69,9 +70,9 @@ class jobs:
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
 
-        print(f"Deletando os dados do período {data_inicio} a {data_fim} na tabela {connection['schema']}")
+        print(f"Deletando os dados do período {data_inicio} a {data_fim} na tabela {table}")
         ut.delete_by_condition_pgsql(self.database_job, query=f"DELETE FROM {connection['schema']} WHERE data between '{data_inicio.strftime('%Y-%m-%d')}' and '{data_fim.strftime('%Y-%m-%d')}'")
 
-        print(f"Inserido os dados na tebela {connection['schema']}")
+        print(f"Inserido os dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)

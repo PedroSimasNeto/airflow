@@ -68,24 +68,8 @@ x-airflow-common:
     &airflow-common-depends-on
     redis:
       condition: service_healthy
-#    postgres:
-#      condition: service_healthy
 
 services:
-#  postgres:
-#    image: postgres:13
-#    environment:
-#      POSTGRES_USER: airflow
-#      POSTGRES_PASSWORD: x5MLB9&F*97P
-#      POSTGRES_DB: airflow
-#    volumes:
-#      - postgres-db-volume:/var/lib/postgresql/data
-#    healthcheck:
-#      test: ["CMD", "pg_isready", "-U", "airflow"]
-#      interval: 5s
-#      retries: 5
-#    restart: always
-
   redis:
     image: redis:latest
     expose:
@@ -273,6 +257,3 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
-#volumes:
-#  postgres-db-volume:

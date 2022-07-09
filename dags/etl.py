@@ -26,9 +26,9 @@ class jobs:
 
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
-
-        print(f"Truncate na tabela {connection['schema']}")
-        ut.truncate_pgsql(self.database_job, table)
+        #
+        # print(f"Truncate na tabela {connection['schema']}")
+        # ut.truncate_pgsql(self.database_job, table)
 
         print(f"Inserindo dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')

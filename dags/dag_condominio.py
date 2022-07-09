@@ -25,9 +25,9 @@ default_args = {
 
 
 @task
-def condominios():
+def st_condominios():
     parametro = jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
-    parametro.importar_condominios(table="condominio")
+    parametro.st_importar_condominios(table="st_condominio")
     return print("Importado os condominios com sucesso!")
 
 
@@ -62,4 +62,4 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> condominios() >> st_relatorio_receitas_despesas("{{ ds }}") >> [task_dimensao_conta_despesa] >> fim
+    inicio >> st_condominios() >> st_relatorio_receitas_despesas("{{ ds }}") >> [task_dimensao_conta_despesa] >> fim

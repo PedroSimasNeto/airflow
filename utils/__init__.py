@@ -59,3 +59,26 @@ def read_pgsql(database_id: str, query: str):
         with pgsql_conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             cursor.execute(query, None)
             return cursor.fetchall()
+
+
+def delete_by_condition_pgsql(database_id, query: str):
+    """
+        Deleta dados de uma tabela no postgresql com ou sem condição
+
+        Parâmetros
+        :param query: Query a ser executada no banco
+        :param database_id: Id da database gravada no Airflow
+    """
+    if not 'WHERE' in query:
+        raise Exception("Are you trying to do a delete action without a condition? This can't be executed!")
+
+    with airflow_buscar_conexao_postgres(database_id) as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as c:
+            try:
+                print(f'Executando query: "{query}"')
+                c.execute(query, None)
+                c.commit()
+            except Exception as ex:
+                print(f'Excecao ao deletar dados no PostgreSQL: {str(ex)}')
+                conn.rollback()
+                raise ex

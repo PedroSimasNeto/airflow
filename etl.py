@@ -1,7 +1,9 @@
-import requests
-import pandas as pd
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
+from datetime import datetime
+import pandas as pd
 import utils as ut
+import requests
 
 
 class jobs:
@@ -13,17 +15,30 @@ class jobs:
 
     def importar_condominios(self, table: str):
         response = requests.request("GET", self.url_job, headers=self.header_job)
+
+        # Transformado o retorno da API em Dataframe Pandas.
         df_condominio = pd.DataFrame(response.json())
 
+        # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
-        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+
+        print(f"Truncate na tabela {connection['schema']}")
         ut.truncate_pgsql(self.database_job, table)
+
+        print(f"Inserindo dados na tabela {connection['schema']}")
+        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_condominio.to_sql(table, engine, if_exists="append", index=False)
 
-    def relatorio_receita_despesa(self, table: str, range_date: dict):
-        data = pd.date_range(range_date["inicio"], range_date["fim"], freq="D")
+    def relatorio_receita_despesa(self, table: str, data_execucao: datetime, intervalo_execucao: int):
+        # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
+        data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
+        data_fim = data_execucao
+        data = pd.date_range(data_inicio, data_fim, freq="D")
+
+        # Criado lista que será preenchida com os dados da API
         dado_list = list()
 
+        # Query que busca no banco de dados os condomínios cadastrados para buscar na API.
         dado = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio_cond) from condominio;")[0][0]
 
         try:
@@ -31,6 +46,7 @@ class jobs:
                 print("Condomínio:", d2)
                 for d1 in data:
                     data_periodo = d1.strftime("%d/%m/%Y")
+                    # Criando a URL para buscar na API por condomínio e por dia.
                     url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
                     response = requests.request("GET", url_completa, headers=self.header_job)
                     if response.status_code and response.status_code == 200:
@@ -42,7 +58,15 @@ class jobs:
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")
 
+        # Transformado a lista em Dataframe Pandas.
         df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+
+        # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
+
+        print(f"Deletando os dados do período {data_inicio} a {data_fim} na tabela {connection['schema']}")
+        ut.delete_by_condition_pgsql(self.database_job, query=f"DELETE FROM {connection['schema']} WHERE data between '{data_inicio.strftime('%Y-%m-%d')}' and '{data_fim.strftime('%Y-%m-%d')}'")
+
+        print(f"Inserido os dados na tebela {connection['schema']}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)

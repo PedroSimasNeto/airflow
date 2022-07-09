@@ -18,7 +18,7 @@ class jobs:
         self.header_job = header
         self.database_job = database
 
-    def importar_condominios(self, table: str):
+    def st_importar_condominios(self, table: str):
         response = requests.request("GET", self.url_job, headers=self.header_job)
 
         # Transformado o retorno da API em Dataframe Pandas.
@@ -32,7 +32,7 @@ class jobs:
 
         print(f"Inserindo dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df_condominio.to_sql(table, engine, if_exists="append", index=False)
+        df_condominio.to_sql(table, engine, if_exists="replace", index=False)
 
     def st_relatorio_receita_despesa(self, table: str, data_execucao, intervalo_execucao: int):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.

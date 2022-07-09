@@ -32,6 +32,7 @@ def condominios():
 @task
 def st_relatorio_receitas_despesas(data_execucao):
     parametro = jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
+    print(data_execucao, type(data_execucao))
     parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
     return print("Importado os dados para staging com sucesso!")

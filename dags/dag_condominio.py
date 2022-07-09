@@ -60,4 +60,4 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> condominios() >> st_relatorio_receitas_despesas("{{ next_ds }}") >> [task_dimensao_conta_despesa] >> fim
+    inicio >> condominios() >> st_relatorio_receitas_despesas("{{ data_interval_end }}") >> [task_dimensao_conta_despesa] >> fim

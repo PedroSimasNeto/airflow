@@ -34,8 +34,9 @@ class jobs:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_condominio.to_sql(table, engine, if_exists="append", index=False)
 
-    def st_relatorio_receita_despesa(self, table: str, data_execucao: datetime, intervalo_execucao: int):
+    def st_relatorio_receita_despesa(self, table: str, data_execucao, intervalo_execucao: int):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
+        print(type(data_execucao))
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
         data = pd.date_range(data_inicio, data_fim, freq="D")

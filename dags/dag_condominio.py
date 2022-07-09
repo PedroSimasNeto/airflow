@@ -43,8 +43,29 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
          schedule_interval="30 2 * * 0", tags=["condominios"],
          catchup=False, max_active_runs=1
          ) as dag:
-
     inicio = DummyOperator(task_id="inicio")
+
+    task_condominio = PostgresOperator(
+        task_id="etl_condominio",
+        postgres_conn_id="postgres-datalake",
+        sql="""TRUNCATE TABLE CONDOMINIO;
+                INSERT INTO CONDOMINIO(id_condominio, id_planoconta, nome_condominio, fantasia_condominio, cep_condominio, cpf_cnpj_condominio,
+                                       endereco_condominio, complemento_condominio, bairro_condominio, cidade_condominio, uf_condominio)
+                SELECT
+                    cast(id_condominio_cond as int) as id_condominio,
+                    cast(id_planoconta_plc as int) as id_planoconta,
+                    st_nome_cond as nome_condominio,
+                    st_fantasia_cond as fantasia_condominio,
+                    cast(nullif(replace(st_cep_cond, '-', ''), '') as int) as cep_condominio,
+                    cast(nullif(replace(replace(replace(st_cpf_cond, '-', ''), '/', ''), '.', ''), '') as bigint) as cpf_cnpj_condominio,
+                    st_endereco_cond as endereco_condominio,
+                    st_complemento_cond as complemento_condominio,
+                    st_bairro_cond as bairro_condominio,
+                    st_cidade_cond as cidade_condominio,
+                    st_uf_uf as uf_condominio
+                FROM st_condominio;
+                """
+    )
 
     task_dimensao_conta_despesa = PostgresOperator(
         task_id="dimensao_conta_despesa",
@@ -62,4 +83,4 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> st_condominios() >> st_relatorio_receitas_despesas("{{ ds }}") >> [task_dimensao_conta_despesa] >> fim
+    inicio >> st_condominios() >> task_condominio >> st_relatorio_receitas_despesas("{{ ds }}") >> [task_dimensao_conta_despesa] >> fim

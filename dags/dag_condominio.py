@@ -75,7 +75,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                 SELECT DISTINCT
                     conta, trim(descricao),
                     cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int) as conta_nivel_2
-                from relatorio_receita_despesa 
+                from st_relatorio_receita_despesa 
                 where cast(nullif(split_part(conta, '.', 3), '') as int) is null 
                   and cast(nullif(split_part(conta, '.', 1), '') as int) = 2;
             """

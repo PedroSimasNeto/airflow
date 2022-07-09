@@ -68,11 +68,11 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
     task_dimensao_conta_despesa = PostgresOperator(
         task_id="dimensao_conta_despesa",
         postgres_conn_id="postgres-datalake",
-        sql="""TRUNCATE TABLE CONTAS_DESPESAS;
-               INSERT INTO CONTAS_DESPESAS (CONTA, DESCRICAO, CONTA_NIVEL_1, CONTA_NIVEL_2)
+        sql="""TRUNCATE TABLE DIM_CONTA_DESPESA;
+               INSERT INTO DIM_CONTA_DESPESA (CONTA, DESCRICAO, CONTA_NIVEL_1, CONTA_NIVEL_2)
                 SELECT DISTINCT
                     conta, trim(descricao),
-                    cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int) as conta_nivel_2
+                    cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int)
                 from st_relatorio_receita_despesa 
                 where cast(nullif(split_part(conta, '.', 3), '') as int) is null 
                   and cast(nullif(split_part(conta, '.', 1), '') as int) = 2;

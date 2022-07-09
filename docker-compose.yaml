@@ -68,8 +68,8 @@ x-airflow-common:
     &airflow-common-depends-on
     redis:
       condition: service_healthy
-    postgres:
-      condition: service_healthy
+#    postgres:
+#      condition: service_healthy
 
 services:
 #  postgres:
@@ -274,5 +274,5 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
-volumes:
-  postgres-db-volume:
+#volumes:
+#  postgres-db-volume:

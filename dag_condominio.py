@@ -37,7 +37,7 @@ def relatorio_receitas_despesas(data_execucao):
 
 
 with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
-         schedule_interval="30 2 * * 0", tags=["condominios"]
+         schedule_interval="30 2 * * 0", tags=["condominios"], catchup=False
          ) as dag:
 
     inicio = DummyOperator(task_id="inicio")

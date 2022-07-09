@@ -1,2 +1,2 @@
-# Adm condomínios Conjel
-DAGs e Scripts utilizados para o projeto da Adm. de Condomínios
+# Airflow Conjel
+Neste repositório encontra-se DAGs e ETLs utilizados para execução de fluxo no Airflow.

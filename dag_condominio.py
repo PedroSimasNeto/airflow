@@ -1,3 +1,8 @@
+"""
+Created on Sun Jun 14 20:00:00 2022
+
+@author: Pedro Simas Neto
+"""
 from airflow.operators.dummy import DummyOperator
 from datetime import datetime, timedelta
 from airflow.models import Variable

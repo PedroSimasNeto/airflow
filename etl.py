@@ -1,3 +1,8 @@
+"""
+Created on Sun Jun 14 20:00:00 2022
+
+@author: Pedro Simas Neto
+"""
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
 from datetime import datetime

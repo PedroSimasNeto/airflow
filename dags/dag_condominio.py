@@ -8,10 +8,8 @@ from airflow.operators.dummy import DummyOperator
 from datetime import datetime, timedelta
 from airflow.models import Variable
 from airflow.decorators import task
-from airflow.settings import TIMEZONE
 from airflow import DAG
-from etl import jobs
-import pendulum
+from etl import Jobs
 
 cfg_secrets = Variable.get("administradora_condominios_secret", deserialize_json=True)
 cfg = Variable.get("administradora_condominios", deserialize_json=True)
@@ -26,14 +24,14 @@ default_args = {
 
 @task
 def st_condominios():
-    parametro = jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
+    parametro = Jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
     parametro.st_importar_condominios(table="st_condominio")
     return print("Importado os condominios com sucesso!")
 
 
 @task
 def st_relatorio_receitas_despesas(data_execucao):
-    parametro = jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
+    parametro = Jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
     parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
     return print("Importado os dados para staging com sucesso!")

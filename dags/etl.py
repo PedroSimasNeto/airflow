@@ -11,7 +11,7 @@ import utils as ut
 import requests
 
 
-class jobs:
+class Jobs:
 
     def __init__(self, url, header, database):
         self.url_job = url
@@ -31,7 +31,7 @@ class jobs:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df_condominio.to_sql(table, engine, if_exists="replace", index=False)
 
-    def st_relatorio_receita_despesa(self, table: str, data_execucao, intervalo_execucao: int):
+    def st_relatorio_receita_despesa(self, table: str, data_execucao: str, intervalo_execucao: int):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
         data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)

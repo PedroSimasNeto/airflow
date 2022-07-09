@@ -71,8 +71,8 @@ class jobs:
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
 
-        print(f"Deletando os dados do período {data_inicio} a {data_fim} na tabela {table}")
-        ut.delete_by_condition_pgsql(self.database_job, query=f"DELETE FROM {connection['schema']} WHERE data between '{data_inicio.strftime('%Y-%m-%d')}' and '{data_fim.strftime('%Y-%m-%d')}'")
+        # print(f"Deletando os dados do período {data_inicio} a {data_fim} na tabela {table}")
+        # ut.delete_by_condition_pgsql(self.database_job, query=f"DELETE FROM {connection['schema']} WHERE data between '{data_inicio.strftime('%Y-%m-%d')}' and '{data_fim.strftime('%Y-%m-%d')}'")
 
         print(f"Inserido os dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')

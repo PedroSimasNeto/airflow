@@ -36,7 +36,7 @@ class jobs:
 
     def st_relatorio_receita_despesa(self, table: str, data_execucao, intervalo_execucao: int):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
-        # data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
+        data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
         data = pd.date_range(data_inicio, data_fim, freq="D")

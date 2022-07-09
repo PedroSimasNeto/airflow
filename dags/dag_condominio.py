@@ -32,9 +32,8 @@ def condominios():
 
 
 @task
-def st_relatorio_receitas_despesas(dt):
+def st_relatorio_receitas_despesas(data_execucao):
     parametro = jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
-    data_execucao = pendulum.DateTime(dt.year, dt.day, dt.month, tzinfo=TIMEZONE)
     parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
     return print("Importado os dados para staging com sucesso!")
@@ -63,4 +62,4 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> condominios() >> st_relatorio_receitas_despesas("{{ data_interval_end }}") >> [task_dimensao_conta_despesa] >> fim
+    inicio >> condominios() >> st_relatorio_receitas_despesas("{{ ds }}") >> [task_dimensao_conta_despesa] >> fim

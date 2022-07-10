@@ -46,6 +46,10 @@ class Jobs:
         dado = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from condominio;")[0][0]
         print(f"Será processados {len(dado)} condomínios")
 
+        # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
+        connection = ut.obter_conn_uri(self.database_job)
+        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+
         try:
             for d2 in dado:
                 print("Condomínio:", d2)
@@ -61,15 +65,10 @@ class Jobs:
                                 item[0]["data"] = d1.strftime("%Y-%m-%d")
                                 item[0]["id_condominio"] = d2
                                 dado_list.extend(item)
+                                # Transformado a lista em Dataframe Pandas.
+                                df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+
+                                print(f"Inserido os dados na tabela {table}")
+                                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="replace", index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")
-
-        # Transformado a lista em Dataframe Pandas.
-        df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-
-        # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
-        connection = ut.obter_conn_uri(self.database_job)
-
-        print(f"Inserido os dados na tabela {table}")
-        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df_relatorio_receita_despesa.to_sql(table, engine, if_exists="replace", index=False)

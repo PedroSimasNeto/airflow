@@ -39,11 +39,8 @@ class Jobs:
         data = pd.date_range(data_inicio, data_fim, freq="D")
         print(f"Reprocessando entre os dias {data_inicio.strftime('%Y-%m-%d')} a {data_fim.strftime('%Y-%m-%d')}")
 
-        # Criado lista que será preenchida com os dados da API
-        dado_list = list()
-
         # Query que busca no banco de dados os condomínios cadastrados para buscar na API.
-        dado = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from dim_condominio;")[0][0]
+        dado_condominio = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from dim_condominio;")[0][0]
         print(f"Será processados {len(dado)} condomínios")
 
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
@@ -53,8 +50,10 @@ class Jobs:
         ut.truncate_pgsql(self.database_job, table=table)
 
         try:
-            for d2 in dado:
+            for d2 in dado_condominio:
                 print("Condomínio:", d2)
+                # Criado lista que será preenchida com os dados da API
+                dado_list = list()
                 for d1 in data:
                     data_periodo = d1.strftime("%d/%m/%Y")
                     # Criando a URL para buscar na API por condomínio e por dia.
@@ -67,9 +66,10 @@ class Jobs:
                                 item[0]["data"] = d1.strftime("%Y-%m-%d")
                                 item[0]["id_condominio"] = d2
                                 dado_list.extend(item)
-                                # Transformado a lista em Dataframe Pandas.
-                                df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-                                # Inserindo na tabela staging
-                                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)
+                print(f"Obteve {len(dado_list)} do condomínio {d2}")
+                # Transformado a lista em Dataframe Pandas.
+                df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+                # Inserindo na tabela staging
+                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")

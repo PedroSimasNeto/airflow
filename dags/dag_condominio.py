@@ -80,10 +80,12 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
             """
     )
 
+    data_fato = "{{ next_ds }}"
+
     task_fato_relatorio_despesa = PostgresOperator(
         task_id="fato_relatorio_despesa",
         postgres_conn_id="postgres-datalake",
-        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN '{{ next_ds }}' - interval '{cfg['intervalo_execucao']} Month'  and {{ next_ds }}",
+        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN '{data_fato}' - interval '{cfg['intervalo_execucao']} Month'  and '{data_fato}'",
              """INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
                                                  conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, 
                                                  descricao, valor)

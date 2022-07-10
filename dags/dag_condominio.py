@@ -5,6 +5,7 @@ Created on Mon Jun 14 20:00:00 2022
 """
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
+from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 from airflow.models import Variable
 from airflow.decorators import task
@@ -62,7 +63,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     st_cidade_cond as cidade_condominio,
                     st_uf_uf as uf_condominio
                 FROM st_condominio;
-                """
+            """
     )
 
     task_dimensao_conta_despesa = PostgresOperator(
@@ -73,12 +74,32 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                 SELECT DISTINCT
                     conta, trim(descricao),
                     cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int)
-                from st_relatorio_receita_despesa 
+                FROM ST_RELATORIO_RECEITA_DESPESA 
                 where cast(nullif(split_part(conta, '.', 3), '') as int) is null 
                   and cast(nullif(split_part(conta, '.', 1), '') as int) = 2;
             """
     )
 
+    task_fato_relatorio_despesa = PostgresOperator(
+        task_id="fato_relatorio_despesa",
+        postgres_conn_id="postgres-datalake",
+        sql="""DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN %(inicio) and %(fim) ;
+               INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta, conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, descricao, valor)
+                SELECT
+                    id_condominio,
+                    cast(data as timestamp) as data,
+                    cast(idplanocontas as int) as id_planoconta,
+                    conta as id_conta,
+                    cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int),
+                    cast(nullif(split_part(conta, '.', 3), '') as int), cast(nullif(split_part(conta, '.', 4), '') as int),
+                    cast(nullif(split_part(conta, '.', 5), '') as int), cast(nullif(split_part(conta, '.', 6), '') as int),
+                    trim(descricao) as descricao,
+                    cast(valor as numeric) as valor
+                FROM ST_RELATORIO_RECEITA_DESPESA;
+            """,
+        parameters={"inicio": datetime.strptime("{{ next_ds }}", "%Y-%m-%d") - relativedelta(months=cfg["intervalo_execucao"]), "fim": "{{ next_ds }}"}
+    )
+
     fim = DummyOperator(task_id="fim")
 
-    inicio >> st_condominios() >> task_condominio >> st_relatorio_receitas_despesas("{{ next_ds }}") >> [task_dimensao_conta_despesa] >> fim
+    inicio >> st_condominios() >> task_condominio >> st_relatorio_receitas_despesas("{{ next_ds }}") >> [task_dimensao_conta_despesa, task_fato_relatorio_despesa] >> fim

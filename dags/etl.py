@@ -37,7 +37,7 @@ class Jobs:
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
         data = pd.date_range(data_inicio, data_fim, freq="D")
-        print(f"Reprocessando entre os dias {data_inicio} a {data_fim}")
+        print(f"Reprocessando entre os dias {data_inicio.strftime('%Y-%m-%d')} a {data_fim.strftime('%Y-%m-%d')}")
 
         # Criado lista que será preenchida com os dados da API
         dado_list = list()

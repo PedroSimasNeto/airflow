@@ -98,8 +98,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     trim(descricao) as descricao,
                     cast(valor as numeric) as valor
                 FROM ST_RELATORIO_RECEITA_DESPESA;
-            """],
-        parameters={"inicio": - relativedelta(months=cfg["intervalo_execucao"]), "fim": "{{ next_ds }}"}
+            """]
     )
 
     fim = DummyOperator(task_id="fim")

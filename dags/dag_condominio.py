@@ -18,8 +18,8 @@ cfg = Variable.get("administradora_condominios", deserialize_json=True)
 default_args = {
     "owner": "pedro",
     "start_date": datetime(2022, 6, 14),
-    "retry": 5,
-    "retry_daily": timedelta(minutes=15)
+    "retries": 5,
+    "retry_delay": timedelta(minutes=15)
 }
 
 

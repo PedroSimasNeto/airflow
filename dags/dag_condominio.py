@@ -42,6 +42,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
          schedule_interval="30 2 * * 0", tags=["condominios"],
          catchup=False, max_active_runs=1
          ) as dag:
+
     inicio = DummyOperator(task_id="inicio")
 
     task_condominio = PostgresOperator(
@@ -85,7 +86,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
     task_fato_relatorio_despesa = PostgresOperator(
         task_id="fato_relatorio_despesa",
         postgres_conn_id="postgres-datalake",
-        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month'  and '{data_fato}'",
+        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}'",
              """INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
                                                  conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, 
                                                  descricao, valor)

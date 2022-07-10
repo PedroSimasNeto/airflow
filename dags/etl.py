@@ -41,7 +41,7 @@ class Jobs:
 
         # Query que busca no banco de dados os condomínios cadastrados para buscar na API.
         dado_condominio = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from dim_condominio;")[0][0]
-        print(f"Será processados {len(dado)} condomínios")
+        print(f"Será processados {len(dado_condominio)} condomínios")
 
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)

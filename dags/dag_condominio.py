@@ -27,7 +27,7 @@ default_args = {
 def st_condominios():
     parametro = Jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
     parametro.st_importar_condominios(table="st_condominio")
-    return print("Importado a staging dos condominios com sucesso!")
+    return print("Importado  os dados para staging dos condominios com sucesso!")
 
 
 @task
@@ -35,7 +35,7 @@ def st_relatorio_receitas_despesas(data_execucao):
     parametro = Jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
     parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
-    return print("Importado os dados para staging com sucesso!")
+    return print("Importado os dados para staging das receitas e despesas com sucesso!")
 
 
 with DAG(dag_id="dag_administradora_condominio", default_args=default_args,

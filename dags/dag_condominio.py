@@ -48,9 +48,10 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
     task_condominio = PostgresOperator(
         task_id="etl_condominio",
         postgres_conn_id="postgres-datalake",
-        sql="""TRUNCATE TABLE CONDOMINIO;
-                INSERT INTO CONDOMINIO(id_condominio, id_planoconta, nome_condominio, fantasia_condominio, cep_condominio, cpf_cnpj_condominio,
-                                       endereco_condominio, complemento_condominio, bairro_condominio, cidade_condominio, uf_condominio)
+        sql=["TRUNCATE TABLE DIM_CONDOMINIO;",
+             """
+             INSERT INTO DIM_CONDOMINIO(id_condominio, id_planoconta, nome_condominio, fantasia_condominio, cep_condominio, cpf_cnpj_condominio,
+                                        endereco_condominio, complemento_condominio, bairro_condominio, cidade_condominio, uf_condominio)
                 SELECT
                     cast(id_condominio_cond as int) as id_condominio, cast(id_planoconta_plc as int) as id_planoconta,
                     st_nome_cond as nome_condominio, st_fantasia_cond as fantasia_condominio,
@@ -59,21 +60,25 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     st_endereco_cond as endereco_condominio, st_complemento_cond as complemento_condominio,
                     st_bairro_cond as bairro_condominio, st_cidade_cond as cidade_condominio, st_uf_uf as uf_condominio
                 FROM st_condominio;
-            """
+            """],
+        autocommit=True
     )
 
     task_dimensao_conta_despesa = PostgresOperator(
         task_id="dimensao_conta_despesa",
         postgres_conn_id="postgres-datalake",
-        sql="""TRUNCATE TABLE DIM_CONTA_DESPESA;
-               INSERT INTO DIM_CONTA_DESPESA (CONTA, DESCRICAO, CONTA_NIVEL_1, CONTA_NIVEL_2)
+        sql=["TRUNCATE TABLE DIM_CONTA_DESPESA;",
+             """
+             INSERT INTO DIM_CONTA_DESPESA (CONTA, DESCRICAO, CONTA_NIVEL_1, CONTA_NIVEL_2)
                 SELECT DISTINCT
                     conta, trim(descricao),
                     cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int)
                 FROM ST_RELATORIO_RECEITA_DESPESA 
                 where cast(nullif(split_part(conta, '.', 3), '') as int) is null 
                   and cast(nullif(split_part(conta, '.', 1), '') as int) = 2;
-            """
+            """],
+        autocommit=True
+
     )
 
     data_fato = "{{ next_ds }}"
@@ -92,7 +97,8 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     cast(nullif(split_part(conta, '.', 5), '') as int), cast(nullif(split_part(conta, '.', 6), '') as int),
                     trim(descricao) as descricao, cast(valor as numeric) as valor
                 FROM ST_RELATORIO_RECEITA_DESPESA;
-            """]
+            """],
+        autocommit=True
     )
 
     fim = DummyOperator(task_id="fim")

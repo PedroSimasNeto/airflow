@@ -49,6 +49,8 @@ class Jobs:
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+        # Truncate na staging
+        ut.truncate_pgsql(self.database_job, table=table)
 
         try:
             for d2 in dado:
@@ -69,6 +71,6 @@ class Jobs:
                                 df_relatorio_receita_despesa = pd.DataFrame(dado_list)
 
                                 print(f"Inserido os dados na tabela {table}")
-                                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="replace", index=False)
+                                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")

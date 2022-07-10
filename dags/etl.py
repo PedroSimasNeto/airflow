@@ -69,8 +69,7 @@ class Jobs:
                                 dado_list.extend(item)
                                 # Transformado a lista em Dataframe Pandas.
                                 df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-
-                                print(f"Inserido os dados na tabela {table}")
+                                # Inserindo na tabela staging
                                 df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")

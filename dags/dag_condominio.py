@@ -83,8 +83,10 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
     task_fato_relatorio_despesa = PostgresOperator(
         task_id="fato_relatorio_despesa",
         postgres_conn_id="postgres-datalake",
-        sql="""DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN %(inicio) and %(fim) ;
-               INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta, conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, descricao, valor)
+        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN {datetime.strptime('{{ next_ds }}', '%Y-%m-%d')} and '{{ next_ds }}'",
+             """INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
+                                                 conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, 
+                                                 descricao, valor)
                 SELECT
                     id_condominio,
                     cast(data as timestamp) as data,
@@ -96,8 +98,8 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     trim(descricao) as descricao,
                     cast(valor as numeric) as valor
                 FROM ST_RELATORIO_RECEITA_DESPESA;
-            """,
-        parameters={"inicio": datetime.strptime("{{ next_ds }}", "%Y-%m-%d") - relativedelta(months=cfg["intervalo_execucao"]), "fim": "{{ next_ds }}"}
+            """],
+        parameters={"inicio": - relativedelta(months=cfg["intervalo_execucao"]), "fim": "{{ next_ds }}"}
     )
 
     fim = DummyOperator(task_id="fim")

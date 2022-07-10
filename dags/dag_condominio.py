@@ -27,7 +27,7 @@ default_args = {
 def st_condominios():
     parametro = Jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
     parametro.st_importar_condominios(table="st_condominio")
-    return print("Importado os condominios com sucesso!")
+    return print("Importado a staging dos condominios com sucesso!")
 
 
 @task

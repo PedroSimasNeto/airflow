@@ -59,8 +59,8 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     inicio = DummyOperator(task_id="inicio")
 
-    task_condominio = PostgresOperator(
-        task_id="etl_condominio",
+    task_dimensao_condominio = PostgresOperator(
+        task_id="dim_condominio",
         postgres_conn_id="postgres-datalake",
         sql=["TRUNCATE TABLE DIM_CONDOMINIO;",
              """
@@ -100,7 +100,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
     task_fato_relatorio_despesa = PostgresOperator(
         task_id="fato_relatorio_despesa",
         postgres_conn_id="postgres-datalake",
-        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}'",
+        sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}';",
              """INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
                                                  conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, 
                                                  descricao, valor)
@@ -117,4 +117,4 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> st_condominios() >> task_condominio >> st_relatorio_receitas_despesas("{{ next_ds }}") >> [task_dimensao_conta_despesa, task_fato_relatorio_despesa] >> fim
+    inicio >> st_condominios() >> task_dimensao_condominio >> st_relatorio_receitas_despesas("{{ next_ds }}") >> [task_dimensao_conta_despesa, task_fato_relatorio_despesa] >> fim

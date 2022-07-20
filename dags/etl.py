@@ -78,6 +78,6 @@ class Jobs:
                 # Transformado a lista em Dataframe Pandas.
                 df_relatorio_receita_despesa = pd.DataFrame(dado_list)
                 # Inserindo na tabela staging
-                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="append", index=False)
+                df_relatorio_receita_despesa.to_sql(table, engine, if_exists="replace", index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")

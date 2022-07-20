@@ -52,10 +52,20 @@ def st_relatorio_receitas_despesas(data_execucao):
     return print("Importado os dados para staging das receitas e despesas com sucesso!")
 
 
+doc = """
+### DAG CS8Gestao 
+
+Modelo construido para extrair dados da API da superlogica e importar para o Datalake.
+"""
+
+
 with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
-         schedule_interval="30 2 * * 0", tags=["condominios"],
+         description="DAG CS8 Gestão - Administradora Condomínio",
+         schedule_interval="30 2 * * 0", tags=["condominios", "cs8gestao"],
          catchup=False, max_active_runs=1
          ) as dag:
+
+    dag.doc_md = doc
 
     inicio = DummyOperator(task_id="inicio")
 

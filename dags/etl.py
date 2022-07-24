@@ -51,7 +51,7 @@ class Jobs:
         connection = ut.obter_conn_uri(self.database_job)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         # Truncate na staging
-        # ut.truncate_pgsql(self.database_job, table=table)
+        ut.truncate_pgsql(self.database_job, table=table)
 
         try:
             for d2 in dado_condominio:
@@ -75,9 +75,10 @@ class Jobs:
                                 # Adicionado o dado na lista.
                                 dado_list.extend(item)
                 print(f"Obteve {len(dado_list)} do condomínio {d2}")
-                # Transformado a lista em Dataframe Pandas.
-                df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-                # Inserindo na tabela staging
-                df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
+                if len(dado_list) != 0:
+                    # Transformado a lista em Dataframe Pandas.
+                    df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+                    # Inserindo na tabela staging
+                    df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
         except Exception as ex:
             raise print(f"ERRO! Motivo: {ex}")

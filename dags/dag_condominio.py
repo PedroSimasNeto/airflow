@@ -111,7 +111,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
         task_id="fato_relatorio_despesa",
         postgres_conn_id="postgres-datalake",
         sql=[f"DELETE FROM FATO_RECEITA_DESPESA WHERE DATA BETWEEN cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}';",
-             """INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
+             f"""INSERT INTO FATO_RECEITA_DESPESA(id_condominio, data, id_planoconta, id_conta,
                                                  conta_nivel_1, conta_nivel_2, conta_nivel_3, conta_nivel_4, conta_nivel_5, conta_nivel_6, 
                                                  descricao, valor)
                 SELECT
@@ -120,7 +120,8 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     cast(nullif(split_part(conta, '.', 3), '') as int), cast(nullif(split_part(conta, '.', 4), '') as int),
                     cast(nullif(split_part(conta, '.', 5), '') as int), cast(nullif(split_part(conta, '.', 6), '') as int),
                     trim(descricao) as descricao, cast(valor as numeric) as valor
-                FROM ST_RELATORIO_RECEITA_DESPESA;
+                FROM ST_RELATORIO_RECEITA_DESPESA
+                where cast(data as timestamp) between cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}';
             """],
         autocommit=True
     )

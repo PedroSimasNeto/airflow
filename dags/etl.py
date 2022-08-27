@@ -42,7 +42,7 @@ class Jobs:
         data_ult_processamento = variable_processamento["schedule_dag"]
         condominio_ult_processamento = variable_processamento["id_condominio"]
         # Dimunuindo os números de meses para reprocessamento.
-        data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
+        data_inicio = data_execucao.replace(day=1) - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
         # Criando range de datas para o laço de repetição.
         data = pd.date_range(data_inicio, data_fim, freq="D")
@@ -50,7 +50,6 @@ class Jobs:
 
         # Query que busca no banco de dados os condomínios cadastrados para buscar na API.
         dado_condominio = ut.read_pgsql(self.database_job, "select array_agg(distinct id_condominio) from dim_condominio;")[0][0]
-        print(f"Será processados {len(dado_condominio)} condomínios")
 
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
@@ -86,17 +85,19 @@ class Jobs:
                         df_relatorio_receita_despesa = pd.DataFrame(dado_list)
                         # Inserindo na tabela staging
                         df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
-                return 0
             except:
                 return d2
-            
 
-        if data_ult_processamento == data_execucao:
-            _processamento_condominios(condominio_ult_processamento)
-        else:
-            try:
+        try:
+            # Analise para verificar se já teve tentativa na mesma data de execução.
+            if data_ult_processamento == data_execucao:
+                print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
+                ult_condominio = _processamento_condominios(condominio_ult_processamento)
+            else:
+                # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
+                print(f"Será processados {len(dado_condominio)} condomínios")
                 ult_condominio = _processamento_condominios(dado_condominio)
-            except Exception as ex:
-                update_variable = {"schedule_dag": data_execucao, "id_condominio": ult_condominio}
-                Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
-                raise print(f"ERRO! Motivo: {ex}")
+        except Exception as ex:
+            update_variable = {"schedule_dag": data_execucao, "id_condominio": ult_condominio}
+            Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
+            raise print(f"ERRO! Motivo: {ex}")

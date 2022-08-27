@@ -54,8 +54,6 @@ class Jobs:
         # Obtendo a conexão cadastrada do PostgreSQL (Datalake) no Airflow.
         connection = ut.obter_conn_uri(self.database_job)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        # Truncate na staging
-        ut.truncate_pgsql(self.database_job, table=table)
 
         def _processamento_condominios(condominios):
             try:
@@ -79,25 +77,28 @@ class Jobs:
                                     item[0]["id_condominio"] = d2
                                     # Adicionado o dado na lista.
                                     dado_list.extend(item)
-                    print(f"Obteve {len(dado_list)} do condomínio {d2}")
+                    print(f"Obteve {len(dado_list)} dados do condomínio {d2}")
                     if len(dado_list) != 0:
                         # Transformado a lista em Dataframe Pandas.
                         df_relatorio_receita_despesa = pd.DataFrame(dado_list)
                         # Inserindo na tabela staging
                         df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
-            except:
-                return d2
+            except Exception as ex:
+                return {"exception": ex, "condominio": d2}
 
         try:
             # Analise para verificar se já teve tentativa na mesma data de execução.
             if data_ult_processamento == data_execucao:
                 print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
-                ult_condominio = _processamento_condominios(condominio_ult_processamento)
+                processamento_condominio = _processamento_condominios(condominio_ult_processamento)
             else:
-                # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
+                # Truncate na staging
+                ut.truncate_pgsql(self.database_job, table=table)
+                
                 print(f"Será processados {len(dado_condominio)} condomínios")
-                ult_condominio = _processamento_condominios(dado_condominio)
-        except Exception as ex:
-            update_variable = {"schedule_dag": data_execucao, "id_condominio": ult_condominio}
+                processamento_condominio = _processamento_condominios(dado_condominio)
+        except:
+            # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
+            update_variable = {"schedule_dag": data_execucao, "id_condominio": processamento_condominio["condominio"]}
             Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
-            raise print(f"ERRO! Motivo: {ex}")
+            raise print(f"ERRO! Motivo: {processamento_condominio['exception']}")

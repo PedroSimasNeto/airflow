@@ -3,6 +3,7 @@ Created on Mon Jun 14 20:00:00 2022
 
 @author: Pedro Simas Neto
 """
+from airflow.models import Variable
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
 from datetime import datetime
@@ -36,6 +37,10 @@ class Jobs:
 
         # Transformando a string em data
         data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
+        # Variável que armazena a última data de processamento e o último condomínio processado
+        variable_processamento = Variable.get("condominios_atualizacao", deserialize_json=True)
+        data_ult_processamento = variable_processamento["schedule_dag"]
+        condominio_ult_processamento = variable_processamento["id_condominio"]
         # Dimunuindo os números de meses para reprocessamento.
         data_inicio = data_execucao - relativedelta(months=intervalo_execucao)
         data_fim = data_execucao
@@ -53,32 +58,45 @@ class Jobs:
         # Truncate na staging
         ut.truncate_pgsql(self.database_job, table=table)
 
-        try:
-            for d2 in dado_condominio:
-                print("Condomínio:", d2)
-                # Criado lista que será preenchida com os dados da API por condomínio
-                dado_list = list()
-                for d1 in data:
-                    # Alterando o formato da data por questão da API.
-                    data_periodo = d1.strftime("%d/%m/%Y")
-                    # Criando a URL para buscar na API por condomínio e por dia.
-                    url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
-                    response = requests.request("GET", url_completa, headers=self.header_job)
-                    if response.status_code and response.status_code == 200:
-                        response_json = response.json()
-                        if response_json:
-                            for item in response_json[0]["itens"]:
-                                # Inserindo a data nos dados
-                                item[0]["data"] = d1.strftime("%Y-%m-%d")
-                                # Inserindo o numero do condomínio
-                                item[0]["id_condominio"] = d2
-                                # Adicionado o dado na lista.
-                                dado_list.extend(item)
-                print(f"Obteve {len(dado_list)} do condomínio {d2}")
-                if len(dado_list) != 0:
-                    # Transformado a lista em Dataframe Pandas.
-                    df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-                    # Inserindo na tabela staging
-                    df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
-        except Exception as ex:
-            raise print(f"ERRO! Motivo: {ex}")
+        def _processamento_condominios(condominios):
+            try:
+                for d2 in condominios:
+                    print("Condomínio:", d2)
+                    # Criado lista que será preenchida com os dados da API por condomínio
+                    dado_list = list()
+                    for d1 in data:
+                        # Alterando o formato da data por questão da API.
+                        data_periodo = d1.strftime("%d/%m/%Y")
+                        # Criando a URL para buscar na API por condomínio e por dia.
+                        url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
+                        response = requests.request("GET", url_completa, headers=self.header_job)
+                        if response.status_code and response.status_code == 200:
+                            response_json = response.json()
+                            if response_json:
+                                for item in response_json[0]["itens"]:
+                                    # Inserindo a data nos dados
+                                    item[0]["data"] = d1.strftime("%Y-%m-%d")
+                                    # Inserindo o numero do condomínio
+                                    item[0]["id_condominio"] = d2
+                                    # Adicionado o dado na lista.
+                                    dado_list.extend(item)
+                    print(f"Obteve {len(dado_list)} do condomínio {d2}")
+                    if len(dado_list) != 0:
+                        # Transformado a lista em Dataframe Pandas.
+                        df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+                        # Inserindo na tabela staging
+                        df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
+                return 0
+            except:
+                return d2
+            
+
+        if data_ult_processamento == data_execucao:
+            _processamento_condominios(condominio_ult_processamento)
+        else:
+            try:
+                ult_condominio = _processamento_condominios(dado_condominio)
+            except Exception as ex:
+                update_variable = {"schedule_dag": data_execucao, "id_condominio": ult_condominio}
+                Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
+                raise print(f"ERRO! Motivo: {ex}")

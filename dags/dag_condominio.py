@@ -5,7 +5,6 @@ Created on Mon Jun 14 20:00:00 2022
 """
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
-from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 from airflow.models import Variable
 from airflow.decorators import task

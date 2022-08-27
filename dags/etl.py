@@ -36,14 +36,14 @@ class Jobs:
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
 
         # Transformando a string em data
-        data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
+        dt_execucao = datetime.strptime(data_execucao, "%Y-%m-%d")
         # Variável que armazena a última data de processamento e o último condomínio processado
         variable_processamento = Variable.get("condominios_atualizacao", deserialize_json=True)
-        data_ult_processamento = variable_processamento["schedule_dag"]
+        data_ult_processamento = datetime.strptime(variable_processamento["schedule_dag"], "%Y-%m-%d")
         condominio_ult_processamento = variable_processamento["id_condominio"]
         # Dimunuindo os números de meses para reprocessamento.
-        data_inicio = data_execucao.replace(day=1) - relativedelta(months=intervalo_execucao)
-        data_fim = data_execucao
+        data_inicio = dt_execucao.replace(day=1) - relativedelta(months=intervalo_execucao)
+        data_fim = dt_execucao
         # Criando range de datas para o laço de repetição.
         data = pd.date_range(data_inicio, data_fim, freq="D")
         print(f"Reprocessando entre os dias {data_inicio.strftime('%Y-%m-%d')} a {data_fim.strftime('%Y-%m-%d')}")
@@ -84,21 +84,19 @@ class Jobs:
                         # Inserindo na tabela staging
                         df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
             except Exception as ex:
-                return {"exception": ex, "condominio": d2}
+                # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
+                update_variable = {"schedule_dag": dt_execucao.strftime("%Y-%m-%d"), "id_condominio": d2}
+                Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
+                raise print(f"ERROR! Causa: {ex}")
 
-        try:
-            # Analise para verificar se já teve tentativa na mesma data de execução.
-            if data_ult_processamento == data_execucao:
-                print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
-                processamento_condominio = _processamento_condominios(condominio_ult_processamento)
-            else:
-                # Truncate na staging
-                ut.truncate_pgsql(self.database_job, table=table)
-                
-                print(f"Será processados {len(dado_condominio)} condomínios")
-                processamento_condominio = _processamento_condominios(dado_condominio)
-        except:
-            # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
-            update_variable = {"schedule_dag": data_execucao, "id_condominio": processamento_condominio["condominio"]}
-            Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
-            raise print(f"ERRO! Motivo: {processamento_condominio['exception']}")
+    
+        # Analise para verificar se já teve tentativa na mesma data de execução.
+        if data_ult_processamento == data_execucao:
+            print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
+            _processamento_condominios(condominio_ult_processamento)
+        else:
+            # Truncate na staging
+            ut.truncate_pgsql(self.database_job, table=table)
+            
+            print(f"Será processados {len(dado_condominio)} condomínios")
+            _processamento_condominios(dado_condominio)

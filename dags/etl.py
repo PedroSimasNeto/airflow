@@ -55,12 +55,12 @@ class Jobs:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
 
         def _processamento_condominios(condominios):
-            # Criado lista que será preenchida com os dados da API por condomínio
-            dado_list = list()
             try:
                 for d2 in condominios:
                     print("Condomínio:", d2)
                     for d1 in data:
+                        # Criado lista que será preenchida com os dados da API por condomínio e período
+                        dado_list = list()
                         # Alterando o formato da data por questão da API.
                         data_periodo = d1.strftime("%m/%d/%Y")
                         # Criando a URL para buscar na API por condomínio e por dia.

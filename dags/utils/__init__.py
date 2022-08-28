@@ -84,7 +84,7 @@ def delete_by_condition_pgsql(database_id, query: str):
             try:
                 print(f'Executando query: "{query}"')
                 c.execute(query, None)
-                c.commit()
+                conn.commit()
             except Exception as ex:
                 print(f'Excecao ao deletar dados no PostgreSQL: {str(ex)}')
                 conn.rollback()

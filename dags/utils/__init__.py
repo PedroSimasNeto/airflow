@@ -80,7 +80,7 @@ def delete_by_condition_pgsql(database_id, query: str):
         raise Exception("Are you trying to do a delete action without a condition? This can't be executed!")
 
     with airflow_buscar_conexao_postgres(database_id) as conn:
-        with conn.cursor(cursor_factory=extras.DictCursor) as c:
+        with conn.cursor() as c:
             try:
                 print(f'Executando query: "{query}"')
                 c.execute(query, None)

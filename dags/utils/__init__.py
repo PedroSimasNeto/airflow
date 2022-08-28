@@ -3,7 +3,7 @@ Created on Mon Jun 14 20:00:00 2022
 
 @author: Pedro Simas Neto
 """
-# from airflow.providers.telegram.operators.telegram import TelegramOperator
+from airflow.providers.telegram.operators.telegram import TelegramOperator
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
 import psycopg2
@@ -108,16 +108,16 @@ def get_api(url, headers):
 
 
 
-# def task_failure_alert(context):
-#     failed_alert = TelegramOperator(
-#         task_id="telegram_failed",
-#         text=f"""
-#             Task Failed.
-#             <b>Task</b>: {context.get('task_instance').task_id}
-#             <b>Dag</b>: {context.get('task_instance').dag_id}
-#             <b>Execution Time</b>: {context.get('execution_date').strftime("%Y-%m-%d %H:%M")}
-#             <b>Log URL</b>: {context.get('task_instance').log_url}
-#             """,
-#         chat_id="-"
-#     )
-#     return failed_alert.execute(context)
+def task_failure_alert(context):
+    failed_alert = TelegramOperator(
+        task_id="telegram_failed",
+        text=f"""
+            Task Failed.
+            <b>Task</b>: {context.get('task_instance').task_id}
+            <b>Dag</b>: {context.get('task_instance').dag_id}
+            <b>Execution Time</b>: {context.get('execution_date').strftime("%Y-%m-%d %H:%M")}
+            <b>Log URL</b>: {context.get('task_instance').log_url}
+            """,
+        chat_id="-1001619323454"
+    )
+    return failed_alert.execute(context)

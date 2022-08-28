@@ -91,7 +91,7 @@ class Jobs:
         # Analise para verificar se já teve tentativa na mesma data de execução.
         if data_ult_processamento == dt_execucao:
             # Delete dos dados possíveis processados do condomínio
-            ut.delete_by_condition_pgsql(self.database_job, f"DELETE FROM {table} WHERE id_condominio = {condominio_ult_processamento}")
+            ut.delete_by_condition_pgsql(self.database_job, f"DELETE FROM {table} WHERE id_condominio = {condominio_ult_processamento};")
 
             print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
             dado_condominio_ajustado = dado_condominio[dado_condominio.index(condominio_ult_processamento):]

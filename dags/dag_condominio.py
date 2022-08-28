@@ -8,6 +8,7 @@ from airflow.operators.dummy import DummyOperator
 from datetime import datetime, timedelta
 from airflow.models import Variable
 from airflow.decorators import task
+from utils import task_failure_alert
 from airflow import DAG
 from etl import Jobs
 
@@ -17,8 +18,8 @@ cfg = Variable.get("administradora_condominios", deserialize_json=True)
 default_args = {
     "owner": "pedro",
     "start_date": datetime(2022, 6, 14),
-    "retries": 5,
-    "retry_delay": timedelta(minutes=15)
+    "retries": 10,
+    "retry_delay": timedelta(minutes=10)
 }
 
 
@@ -61,7 +62,8 @@ Modelo construido para extrair dados da API da superlogica e importar para o Dat
 with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
          description="DAG CS8 Gestão - Administradora Condomínio",
          schedule_interval="30 2 * * 0", tags=["condominios", "cs8gestao"],
-         catchup=False, max_active_runs=1
+         catchup=False, max_active_runs=1,
+         on_failure_callback=task_failure_alert
          ) as dag:
 
     dag.doc_md = doc

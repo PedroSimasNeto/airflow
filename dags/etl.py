@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from datetime import datetime
 import pandas as pd
 import utils as ut
-import requests
 
 
 class Jobs:
@@ -20,7 +19,7 @@ class Jobs:
         self.database_job = database
 
     def st_importar_condominios(self, table: str):
-        response = requests.request("GET", self.url_job, headers=self.header_job)
+        response = ut.get_api(url=self.url_job, headers=self.header_job)
 
         # Transformado o retorno da API em Dataframe Pandas.
         df_condominio = pd.DataFrame(response.json())
@@ -56,18 +55,18 @@ class Jobs:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
 
         def _processamento_condominios(condominios):
+            # Criado lista que será preenchida com os dados da API por condomínio
+            dado_list = list()
             try:
                 for d2 in condominios:
                     print("Condomínio:", d2)
-                    # Criado lista que será preenchida com os dados da API por condomínio
-                    dado_list = list()
                     for d1 in data:
                         # Alterando o formato da data por questão da API.
-                        data_periodo = d1.strftime("%d/%m/%Y")
+                        data_periodo = d1.strftime("%m/%d/%Y")
                         # Criando a URL para buscar na API por condomínio e por dia.
                         url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
-                        response = requests.request("GET", url_completa, headers=self.header_job)
-                        if response.status_code and response.status_code == 200:
+                        response = ut.get_api(url=url_completa, headers=self.header_job)
+                        if response.status_code == 200:
                             response_json = response.json()
                             if response_json:
                                 for item in response_json[0]["itens"]:
@@ -78,11 +77,10 @@ class Jobs:
                                     # Adicionado o dado na lista.
                                     dado_list.extend(item)
                     print(f"Obteve {len(dado_list)} dados do condomínio {d2}")
-                    if len(dado_list) != 0:
-                        # Transformado a lista em Dataframe Pandas.
-                        df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-                        # Inserindo na tabela staging
-                        df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
+                    # Transformado a lista em Dataframe Pandas.
+                    df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+                    # Inserindo na tabela staging
+                    df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
             except Exception as ex:
                 # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
                 update_variable = {"schedule_dag": dt_execucao.strftime("%Y-%m-%d"), "id_condominio": d2}
@@ -92,8 +90,12 @@ class Jobs:
     
         # Analise para verificar se já teve tentativa na mesma data de execução.
         if data_ult_processamento == data_execucao:
+            # Delete dos dados possíveis processados do condomínio
+            ut.delete_by_condition_pgsql(self.database_job, f"DELETE FROM {table} WHERE id_condominio = {condominio_ult_processamento}")
+
             print(f"Houve falha e continuará a partir do condomínio: {condominio_ult_processamento}")
-            _processamento_condominios(condominio_ult_processamento)
+            dado_condominio_ajustado = dado_condominio[dado_condominio.index(condominio_ult_processamento):]
+            _processamento_condominios(dado_condominio_ajustado)
         else:
             # Truncate na staging
             ut.truncate_pgsql(self.database_job, table=table)

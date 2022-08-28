@@ -7,6 +7,7 @@ Created on Mon Jun 14 20:00:00 2022
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
 import psycopg2
+import requests
 
 
 def obter_conn_uri(database_id):
@@ -62,7 +63,7 @@ def read_pgsql(database_id: str, query: str):
         :param database_id: Id da database gravada no Airflow
     """
     with airflow_buscar_conexao_postgres(database_id) as pgsql_conn:
-        with pgsql_conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        with pgsql_conn.cursor(cursor_factory=extras.DictCursor) as cursor:
             cursor.execute(query, None)
             return cursor.fetchall()
 
@@ -79,7 +80,7 @@ def delete_by_condition_pgsql(database_id, query: str):
         raise Exception("Are you trying to do a delete action without a condition? This can't be executed!")
 
     with airflow_buscar_conexao_postgres(database_id) as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as c:
+        with conn.cursor(cursor_factory=extras.DictCursor) as c:
             try:
                 print(f'Executando query: "{query}"')
                 c.execute(query, None)
@@ -88,6 +89,23 @@ def delete_by_condition_pgsql(database_id, query: str):
                 print(f'Excecao ao deletar dados no PostgreSQL: {str(ex)}')
                 conn.rollback()
                 raise ex
+
+
+def get_api(url, headers):
+    """
+        Obtém dados via API através de GET
+
+        Parâmetros
+        :param url: URL da página que deverá retornar os dados
+        :param headers: Dados de autorização para consultar API
+    """
+    response = requests.get(url, headers=headers)
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        raise print("Falhou ao retornar API", e)
+    return response
+
 
 
 # def task_failure_alert(context):

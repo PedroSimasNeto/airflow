@@ -19,7 +19,7 @@ default_args = {
     "owner": "pedro",
     "start_date": datetime(2022, 6, 14),
     "retries": 10,
-    "retry_delay": timedelta(minutes=10)
+    "retry_delay": timedelta(minutes=5)
 }
 
 

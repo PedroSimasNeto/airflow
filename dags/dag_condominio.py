@@ -83,7 +83,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     cast(nullif(replace(st_cep_cond, '-', ''), '') as int) as cep_condominio,
                     cast(nullif(replace(replace(replace(st_cpf_cond, '-', ''), '/', ''), '.', ''), '') as bigint) as cpf_cnpj_condominio,
                     st_endereco_cond as endereco_condominio, st_complemento_cond as complemento_condominio,
-                    st_bairro_cond as bairro_condominio, st_cidade_cond as cidade_condominio, st_uf_uf as uf_condominio
+                    st_bairro_cond as bairro_condominio, st_cidade_cond as cidade_condominio, st_uf_uf as uf_condominio, fl_ativo_cond as fl_ativo
                 FROM st_condominio;
             """],
         autocommit=True

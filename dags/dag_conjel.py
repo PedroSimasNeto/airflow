@@ -51,7 +51,7 @@ with DAG("dag_conjel_v01",
                 }
             ))
 
-    with TaskGroup("sql") as task_dimensoes:
+    with TaskGroup("dimensoes") as task_dimensoes:
         dimensoes()
     
 

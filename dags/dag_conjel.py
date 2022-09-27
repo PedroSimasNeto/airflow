@@ -41,7 +41,7 @@ with DAG("dag_conjel_v01",
 
     task_staging = []
 
-    with TaskGroup(group_id="task_group_staging") as task_group_staging:
+    with TaskGroup(group_id="staging") as task_group_staging:
         for n in cfg["views"]:
             task_staging.append(PythonOperator(
                 task_id=n,

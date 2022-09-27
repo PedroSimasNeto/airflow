@@ -41,7 +41,10 @@ with DAG("dag_conjel_v01",
     for n in cfg["views"]:
         task_staging = PythonOperator(
             task_id=n,
-            python_callable=importa_stating(view=n)
+            python_callable=importa_stating,
+            op_kwargs={
+                "view": n
+            }
         )
 
     task_dimensao_empresas = PostgresOperator(

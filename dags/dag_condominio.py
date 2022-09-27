@@ -29,7 +29,7 @@ def st_condominios():
     print(f"Task iniciado: {data_inicio.strftime('%Y-%m-%d')}")
 
     parametro = Jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
-    parametro.st_importar_condominios(table="staging.st_condominio")
+    parametro.st_importar_condominios(table="st_condominio", schema="staging")
 
     data_fim = datetime.now() - data_inicio
     print(f"Task finalizado: {datetime.now().strftime('%Y-%m-%d')} \n Tempo total: {data_fim}")
@@ -43,7 +43,7 @@ def st_relatorio_receitas_despesas(data_execucao):
     print(f"Task iniciado: {data_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
 
     parametro = Jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
-    parametro.st_relatorio_receita_despesa(table="staging.st_relatorio_receita_despesa", data_execucao=data_execucao,
+    parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", schema="staging", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
 
     data_fim = datetime.now() - data_inicio

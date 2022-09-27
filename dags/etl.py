@@ -18,7 +18,7 @@ class Jobs:
         self.header_job = header
         self.database_job = database
 
-    def st_importar_condominios(self, table: str):
+    def st_importar_condominios(self, table: str, schema: str):
         response = ut.get_api(url=self.url_job, headers=self.header_job)
 
         # Transformado o retorno da API em Dataframe Pandas.
@@ -29,9 +29,9 @@ class Jobs:
 
         print(f"Inserindo dados na tabela {table}")
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df_condominio.to_sql(table, engine, if_exists="replace", index=False)
+        df_condominio.to_sql(table, engine, schema=schema, if_exists="replace", index=False)
 
-    def st_relatorio_receita_despesa(self, table: str, data_execucao: str, intervalo_execucao: int):
+    def st_relatorio_receita_despesa(self, table: str, data_execucao: str, intervalo_execucao: int, schema: str):
         # Obtendo a data de execução do Scheduler e diminuindo pelos numeros de meses parametrizados no Airflow.
 
         # Transformando a string em data
@@ -80,7 +80,7 @@ class Jobs:
                     # Transformado a lista em Dataframe Pandas.
                     df_relatorio_receita_despesa = pd.DataFrame(dado_list)
                     # Inserindo na tabela staging
-                    df_relatorio_receita_despesa.to_sql(table, engine, if_exists='append', index=False)
+                    df_relatorio_receita_despesa.to_sql(table, engine, schema=schema, if_exists='append', index=False)
             except Exception as ex:
                 # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
                 update_variable = {"schedule_dag": dt_execucao.strftime("%Y-%m-%d"), "id_condominio": d2}

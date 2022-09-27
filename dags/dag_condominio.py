@@ -29,7 +29,7 @@ def st_condominios():
     print(f"Task iniciado: {data_inicio.strftime('%Y-%m-%d')}")
 
     parametro = Jobs(url=cfg["condominios"], header=cfg_secrets, database="postgres-datalake")
-    parametro.st_importar_condominios(table="st_condominio")
+    parametro.st_importar_condominios(table="staging.st_condominio")
 
     data_fim = datetime.now() - data_inicio
     print(f"Task finalizado: {datetime.now().strftime('%Y-%m-%d')} \n Tempo total: {data_fim}")
@@ -43,7 +43,7 @@ def st_relatorio_receitas_despesas(data_execucao):
     print(f"Task iniciado: {data_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
 
     parametro = Jobs(url=cfg["relatorios"], header=cfg_secrets, database="postgres-datalake")
-    parametro.st_relatorio_receita_despesa(table="st_relatorio_receita_despesa", data_execucao=data_execucao,
+    parametro.st_relatorio_receita_despesa(table="staging.st_relatorio_receita_despesa", data_execucao=data_execucao,
                                            intervalo_execucao=cfg["intervalo_execucao"])
 
     data_fim = datetime.now() - data_inicio
@@ -84,7 +84,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     cast(nullif(replace(replace(replace(st_cpf_cond, '-', ''), '/', ''), '.', ''), '') as bigint) as cpf_cnpj_condominio,
                     st_endereco_cond as endereco_condominio, st_complemento_cond as complemento_condominio,
                     st_bairro_cond as bairro_condominio, st_cidade_cond as cidade_condominio, st_uf_uf as uf_condominio, cast(fl_ativo_cond as int)
-                FROM st_condominio;
+                FROM staging.st_condominio;
             """],
         autocommit=True
     )
@@ -98,7 +98,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                 SELECT DISTINCT
                     conta, trim(descricao),
                     cast(nullif(split_part(conta, '.', 1), '') as int), cast(nullif(split_part(conta, '.', 2), '') as int)
-                FROM ST_RELATORIO_RECEITA_DESPESA 
+                FROM staging.ST_RELATORIO_RECEITA_DESPESA 
                 where cast(nullif(split_part(conta, '.', 3), '') as int) is null 
                   and cast(nullif(split_part(conta, '.', 1), '') as int) = 2;
             """],
@@ -121,7 +121,7 @@ with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
                     cast(nullif(split_part(conta, '.', 3), '') as int), cast(nullif(split_part(conta, '.', 4), '') as int),
                     cast(nullif(split_part(conta, '.', 5), '') as int), cast(nullif(split_part(conta, '.', 6), '') as int),
                     trim(descricao) as descricao, cast(valor as numeric) as valor
-                FROM ST_RELATORIO_RECEITA_DESPESA
+                FROM staging.ST_RELATORIO_RECEITA_DESPESA
                 where cast(data as timestamp) between cast('{data_fato}' as date) - interval '{cfg['intervalo_execucao']} Month' and '{data_fato}';
             """],
         autocommit=True

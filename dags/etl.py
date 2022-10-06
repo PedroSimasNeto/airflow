@@ -77,10 +77,11 @@ class Jobs_c8sgestao:
                                     # Adicionado o dado na lista.
                                     dado_list.extend(item)
                     print(f"Obteve {len(dado_list)} dados do condomínio {d2}")
-                    # Transformado a lista em Dataframe Pandas.
-                    df_relatorio_receita_despesa = pd.DataFrame(dado_list)
-                    # Inserindo na tabela staging
-                    df_relatorio_receita_despesa.to_sql(table, engine, schema=schema, if_exists='append', index=False)
+                    if len(dado_list) > 0:
+                        # Transformado a lista em Dataframe Pandas.
+                        df_relatorio_receita_despesa = pd.DataFrame(dado_list)
+                        # Inserindo na tabela staging
+                        df_relatorio_receita_despesa.to_sql(table, engine, schema=schema, if_exists='append', index=False)
             except Exception as ex:
                 # Condição que atualizará o último condomínio na variável do Airflow caso dê falha no Job.
                 update_variable = {"schedule_dag": dt_execucao.strftime("%Y-%m-%d"), "id_condominio": d2}

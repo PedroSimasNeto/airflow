@@ -99,7 +99,7 @@ class Jobs_c8sgestao:
             _processamento_condominios(dado_condominio_ajustado)
         else:
             # Truncate na staging
-            # ut.truncate_pgsql(self.database_job, table=schema + '.' + table)
+            ut.truncate_pgsql(self.database_job, table=schema + '.' + table)
             
             print(f"Será processados {len(dado_condominio)} condomínios")
             _processamento_condominios(dado_condominio)

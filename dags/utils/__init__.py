@@ -6,9 +6,9 @@ Created on Mon Jun 14 20:00:00 2022
 from airflow.providers.telegram.operators.telegram import TelegramOperator
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
-import pymysql.cursors as cursors
+import MySQLdb.cursors as cursors
 import psycopg2
-import pymysql
+import MySQLdb 
 import requests
 
 
@@ -53,7 +53,7 @@ def airflow_buscar_conexao_mysql(database_id):
             - Conexao com o postgres.
             """
     config_db = obter_conn_uri(database_id)
-    conn = pymysql.connect(host=config_db["host"],
+    conn = MySQLdb.connect(host=config_db["host"],
                             port=config_db["port"],
                             database=config_db["schema"],
                             user=config_db["user"],

@@ -6,7 +6,9 @@ Created on Mon Jun 14 20:00:00 2022
 from airflow.providers.telegram.operators.telegram import TelegramOperator
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
+import pymysql.cursors as cursors
 import psycopg2
+import pymysql
 import requests
 
 
@@ -40,6 +42,26 @@ def airflow_buscar_conexao_postgres(database_id):
     return conn
 
 
+def airflow_buscar_conexao_mysql(database_id):
+    """
+            Retorna conexão com o postgres usando as configurações gravadas na metabase do airflow.
+
+            Parâmetros
+            - database_id (str) : Id da database gravada no airflow.
+
+            Retorno
+            - Conexao com o postgres.
+            """
+    config_db = obter_conn_uri(database_id)
+    conn = pymysql.connect(host=config_db["host"],
+                            port=config_db["port"],
+                            database=config_db["schema"],
+                            user=config_db["user"],
+                            password=config_db["password"],
+                            cursorclass=cursors.DictCursor)
+    return conn
+
+
 def truncate_pgsql(database_id: str, table: str):
     """
         Trunca os dados da tabela no postgresql
@@ -64,6 +86,19 @@ def read_pgsql(database_id: str, query: str):
     """
     with airflow_buscar_conexao_postgres(database_id) as pgsql_conn:
         with pgsql_conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(query, None)
+            return cursor.fetchall()
+
+def read_mysql(database_id: str, query: str):
+    """
+        Obtém e resultado de uma consulta no postgresql
+
+        Parâmetros
+        :param query: Query a ser executada no banco
+        :param database_id: Id da database gravada no Airflow
+    """
+    with airflow_buscar_conexao_postgres(database_id) as pgsql_conn:
+        with pgsql_conn.cursor() as cursor:
             cursor.execute(query, None)
             return cursor.fetchall()
 

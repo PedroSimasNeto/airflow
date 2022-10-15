@@ -11,7 +11,7 @@ from airflow.models import Variable
 from airflow import DAG
 from datetime import datetime
 from etl import Jobs_conjel
-from script_sql import dimensoes
+from script_sql import dimensoes_tareffa
 
 default_args = {
     "owner": "Pedro Simas",
@@ -20,11 +20,20 @@ default_args = {
 
 cfg = Variable.get("cfg_conjel", deserialize_json=True)
 
-def importa_stating(view: str):
+
+def importa_stating_tareffa(view: str):
     print(f"Importando staging {view}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
     query = f"SELECT * FROM conjel.{view}"
-    job.extract(conn_read=cfg["conn_tareffa"], query=query, table=n, schema="staging")
+    job.extract(conn_type="postgres", conn_read=cfg["conn_tareffa"], query=query, table=view, schema="staging")
+
+
+def importa_stating_qualyteam(table: str):
+    print(f"Importando staging {table}")
+    job = Jobs_conjel(datalake=cfg["conn_datalake"])
+    query = f"SELECT * FROM {table}"
+    job.extract(conn_type="mysql", conn_read=cfg["conn_qualyteam"], query=query, table=table, schema="staging")
+
 
 with DAG("dag_conjel_v01",
          description="DAG Conjel - Contabilidade",
@@ -35,24 +44,39 @@ with DAG("dag_conjel_v01",
 
     inicio = DummyOperator(task_id="inicio")
 
+    dummy_tareffa = DummyOperator(task_id="tareffa")
+    dummy_qualyteam = DummyOperator(task_id="qualyteam")
+
     staging_fim = DummyOperator(task_id="fim_staging")
 
     fim = DummyOperator(task_id="fim")
 
-    task_staging = []
-
-    with TaskGroup(group_id="staging") as task_group_staging:
-        for n in cfg["views"]:
+    with TaskGroup(group_id="staging_tareffa") as task_staging_tareffa:
+        task_staging = []
+        for v in cfg["views_tareffa"]:
             task_staging.append(PythonOperator(
-                task_id=n,
-                python_callable=importa_stating,
+                task_id=v,
+                python_callable=importa_stating_tareffa,
                 op_kwargs={
-                    "view": n
+                    "view": v
                 }
             ))
 
-    with TaskGroup("dimensoes") as task_dimensoes:
-        dimensoes()
+    with TaskGroup("dimensoes_tareffa") as task_dimensoes_tareffa:
+        dimensoes_tareffa()
+
+    with TaskGroup("staging_qualyteam") as task_staging_qualyteam:
+        task_staging = []
+        for t in cfg["tables_qualyteam"]:
+            task_staging.append(PythonOperator(
+                task_id=t,
+                python_callable=importa_stating_qualyteam,
+                op_kwargs={
+                    "table": t
+                }
+            ))
     
 
-    inicio >> task_staging >> staging_fim >> task_dimensoes >> fim
+    inicio >> [dummy_tareffa, dummy_qualyteam]
+    dummy_tareffa >> task_staging_tareffa >> staging_fim >> task_dimensoes_tareffa >> fim
+    dummy_qualyteam >> task_staging_qualyteam >> fim

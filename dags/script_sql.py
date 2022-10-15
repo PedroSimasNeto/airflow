@@ -2,7 +2,7 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
 
 
-def dimensoes():
+def dimensoes_tareffa():
 
     inicio = DummyOperator(task_id="inicio")
     fim = DummyOperator(task_id="fim")

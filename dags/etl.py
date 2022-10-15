@@ -109,10 +109,15 @@ class Jobs_conjel:
     def __init__(self, datalake):
         self.datalake_conn = datalake
 
-    def read_pd_sql(self, conn, query: str) -> pd:
+    def read_pd_sql(self, type, conn, query: str) -> pd:
         try:
-            connection = ut.obter_conn_uri(conn)
-            engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+            if type == "postgres":
+                connection = ut.obter_conn_uri(conn)
+                engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+            if type == "mysql":
+                engine = create_engine(f'mysql+pymysql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+            else:
+                raise print("Tipo inválido!")
             df = pd.read_sql_query(query, con=engine)
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
@@ -120,7 +125,7 @@ class Jobs_conjel:
             print(f"Falha! Motivo: {ex}")
         return df
 
-    def extract(self, conn_read, query: str, table: str, schema: str):
+    def extract(self, conn_type, conn_read, query: str, table: str, schema: str):
         connection = ut.obter_conn_uri(self.datalake_conn)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        self.read_pd_sql(conn=conn_read, query=query).to_sql(table, engine, schema=schema, if_exists="replace", index=False)
+        self.read_pd_sql(type=conn_type, conn=conn_read, query=query).to_sql(table, engine, schema=schema, if_exists="replace", index=False)

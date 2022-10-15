@@ -47,7 +47,8 @@ with DAG("dag_conjel_v01",
     dummy_tareffa = DummyOperator(task_id="tareffa")
     dummy_qualyteam = DummyOperator(task_id="qualyteam")
 
-    staging_fim = DummyOperator(task_id="fim_staging")
+    fim_staging_tareffa = DummyOperator(task_id="fim_staging_tareffa")
+    fim_staging_qualyteam = DummyOperator(task_id="fim_staging_qualyteam")
 
     fim = DummyOperator(task_id="fim")
 
@@ -78,5 +79,5 @@ with DAG("dag_conjel_v01",
     
 
     inicio >> [dummy_tareffa, dummy_qualyteam]
-    dummy_tareffa >> task_staging_tareffa >> staging_fim >> task_dimensoes_tareffa >> fim
-    dummy_qualyteam >> task_staging_qualyteam >> fim
+    dummy_tareffa >> task_staging_tareffa >> fim_staging_tareffa >> task_dimensoes_tareffa >> fim
+    dummy_qualyteam >> task_staging_qualyteam  >> fim_staging_qualyteam >> fim

@@ -116,7 +116,7 @@ class Jobs_conjel:
                 engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
             if type == "mysql":
                 connection = ut.obter_conn_uri(conn)
-                engine = create_engine(f'mysql+MySQLdb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+                engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
             else:
                 raise print("Tipo inválido!")
             df = pd.read_sql_query(query, con=engine)

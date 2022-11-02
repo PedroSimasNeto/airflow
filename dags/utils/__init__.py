@@ -3,12 +3,14 @@ Created on Mon Jun 14 20:00:00 2022
 
 @author: Pedro Simas Neto
 """
+from email import charset
 from airflow.providers.telegram.operators.telegram import TelegramOperator
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
 import MySQLdb.cursors as cursors
 import psycopg2
-import MySQLdb 
+import MySQLdb
+import firebirdsql
 import requests
 
 
@@ -19,7 +21,8 @@ def obter_conn_uri(database_id):
         "host": conn.host,
         "schema": conn.schema,
         "user": conn.login,
-        "password": conn.password
+        "password": conn.password,
+        "extra": conn.extra
     }
 
 
@@ -31,7 +34,7 @@ def airflow_buscar_conexao_postgres(database_id):
             - database_id (str) : Id da database gravada no airflow.
 
             Retorno
-            - Conexao com o postgres.
+            - Conexao com o Postgres.
             """
     config_db = obter_conn_uri(database_id)
     conn = psycopg2.connect(host=config_db["host"],
@@ -50,7 +53,7 @@ def airflow_buscar_conexao_mysql(database_id):
             - database_id (str) : Id da database gravada no airflow.
 
             Retorno
-            - Conexao com o postgres.
+            - Conexao com o MySQL.
             """
     config_db = obter_conn_uri(database_id)
     conn = MySQLdb.connect(host=config_db["host"],
@@ -58,6 +61,26 @@ def airflow_buscar_conexao_mysql(database_id):
                            database=config_db["schema"],
                            user=config_db["user"],
                            password=config_db["password"])
+    return conn
+
+
+def airflow_buscar_conexao_firebird(database_id):
+    """
+            Retorna conexão com o postgres usando as configurações gravadas na metabase do airflow.
+
+            Parâmetros
+            - database_id (str) : Id da database gravada no airflow.
+
+            Retorno
+            - Conexao com o Firebird.
+            """
+    config_db = obter_conn_uri(database_id)
+    conn = firebirdsql.connect(host=config_db["host"],
+                               port=config_db["port"],
+                               database=config_db["schema"],
+                               user=config_db["user"],
+                               password=config_db["password"],
+                               charset=config_db["extra"]["charset"])
     return conn
 
 

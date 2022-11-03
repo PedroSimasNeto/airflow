@@ -1,5 +1,5 @@
 """
-Created on Mon Nove 11 19:00:00 2022
+Created on Mon Nov 11 19:00:00 2022
 
 @author: Pedro Simas Neto
 """
@@ -16,7 +16,7 @@ default_args = {
     "start_date": datetime(2022, 11, 1)
 }
 
-cfg = Variable.get("questor_omie", deserialize_json=True)
+# cfg = Variable.get("questor_omie", deserialize_json=True)
 
 
 # @task
@@ -25,10 +25,11 @@ cfg = Variable.get("questor_omie", deserialize_json=True)
 #     job.datalake()
 
 
-with DAG("dag_questor_omie_v01", 
+with DAG("dag_questor_omie_v01",
+         description="Processamento Questor para OMIE",
          default_args=default_args, 
-         schedule_interval=None, 
-         tags=["questor", "omie"], 
+         schedule_interval=None,
+         tags=["conjel", "questor", "omie"],
          catchup=False) as dag:
 
     inicio = DummyOperator(task_id="inicio")

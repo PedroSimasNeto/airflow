@@ -99,7 +99,7 @@ def truncate_pgsql(database_id: str, table: str):
 
 def read_pgsql(database_id: str, query: str):
     """
-        Obtém e resultado de uma consulta no postgresql
+        Obtém o resultado de uma consulta no PostgreSQL
 
         Parâmetros
         :param query: Query a ser executada no banco
@@ -113,7 +113,7 @@ def read_pgsql(database_id: str, query: str):
 
 def read_mysql(database_id: str, query: str):
     """
-        Obtém e resultado de uma consulta no postgresql
+        Obtém o resultado de uma consulta no MySQL
 
         Parâmetros
         :param query: Query a ser executada no banco
@@ -127,7 +127,7 @@ def read_mysql(database_id: str, query: str):
 
 def read_firebird(database_id: str, query: str):
     """
-        Obtém e resultado de uma consulta no postgresql
+        Obtém o resultado de uma consulta no Firebird
 
         Parâmetros
         :param query: Query a ser executada no banco

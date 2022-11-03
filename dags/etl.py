@@ -133,7 +133,7 @@ class Jobs_conjel:
 
 class Questor_OMIE:
 
-    def __init__(self, schema, conn_questor, conn_datalake, table):
+    def __init__(self, schema: str, conn_questor: str, conn_datalake: str, table: str):
         self.schema = schema
         self.table = table
         self.conn_questor = conn_questor
@@ -141,14 +141,7 @@ class Questor_OMIE:
 
     def questor(self) -> list:
         query = f"SELECT * FROM {self.table};"
-        try:
-            print(f"Consultando a tabela {self.table}!")
-            print(f"Execuntando query: {query} na conexão {self.conn_questor}")
-            print(ut.obter_conn_uri(self.conn_questor))
-            consulta = ut.read_firebird(database_id=self.conn_questor, query=query)
-            print(f"Encontrado {len(consulta)} registros.")
-        except Exception as ex:
-            print(f"Falha! Motivo: {ex}")
+        consulta = ut.read_firebird(database_id=self.conn_questor, query=query)
         return consulta
 
     def datalake(self):

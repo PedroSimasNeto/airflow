@@ -1,18 +1,22 @@
-from asyncore import read
+"""
+Created on Mon Nove 11 19:00:00 2022
+
+@author: Pedro Simas Neto
+"""
 from airflow import DAG
 from airflow.decorators import task
-from airflow.operators.python import PythonOperator
+# from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.models import Variable
 from datetime import datetime
 from etl import Questor_OMIE
 
-cfg = Variable.get("questor_omie", deserialize_json=True)
-
 default_args = {
-    "owner": "pedro",
+    "owner": "Pedro Simas",
     "start_date": datetime(2022, 11, 1)
 }
+
+cfg = Variable.get("questor_omie", deserialize_json=True)
 
 
 @task

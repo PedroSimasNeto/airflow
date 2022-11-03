@@ -59,7 +59,7 @@ Modelo construido para extrair dados da API da superlogica e importar para o Dat
 """
 
 
-with DAG(dag_id="dag_administradora_condominio", default_args=default_args,
+with DAG(dag_id="dag_administradora_condominio_v01", default_args=default_args,
          description="DAG CS8 Gestão - Administradora Condomínio",
          schedule_interval="30 2 * * 0", tags=["condominios", "cs8gestao"],
          catchup=False, max_active_runs=1,

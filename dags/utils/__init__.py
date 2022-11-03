@@ -22,7 +22,7 @@ def obter_conn_uri(database_id):
         "schema": conn.schema,
         "user": conn.login,
         "password": conn.password,
-        "extra": json.loads(conn.extra)
+        "extra": conn.extra
     }
 
 
@@ -80,7 +80,7 @@ def airflow_buscar_conexao_firebird(database_id):
                                database=config_db["schema"],
                                user=config_db["user"],
                                password=config_db["password"],
-                               charset=config_db["extra"]["charset"])
+                               charset=json.loads(config_db['extra'])['charset'])
     return conn
 
 

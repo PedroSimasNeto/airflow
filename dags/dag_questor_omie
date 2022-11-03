@@ -25,7 +25,7 @@ def dados_questor(tabelas):
     job.datalake()
 
 
-with DAG("dag_questor_omie", 
+with DAG("dag_questor_omie_v01", 
          default_args=default_args, 
          schedule_interval=None, 
          tags=["questor", "omie"], 

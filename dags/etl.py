@@ -149,7 +149,7 @@ class Questor_OMIE:
         return consulta
 
     def datalake(self):
-        connection = self.conn
+        connection = ut.obter_conn_uri(self.conn)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df = pd.DataFrame(self.questor())
         df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)

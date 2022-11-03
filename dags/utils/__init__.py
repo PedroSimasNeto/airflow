@@ -3,7 +3,6 @@ Created on Mon Jun 14 20:00:00 2022
 
 @author: Pedro Simas Neto
 """
-from email import charset
 from airflow.providers.telegram.operators.telegram import TelegramOperator
 from airflow.hooks.base import BaseHook
 import psycopg2.extras as extras
@@ -111,6 +110,7 @@ def read_pgsql(database_id: str, query: str):
             cursor.execute(query, None)
             return cursor.fetchall()
 
+
 def read_mysql(database_id: str, query: str):
     """
         Obtém e resultado de uma consulta no postgresql
@@ -121,6 +121,20 @@ def read_mysql(database_id: str, query: str):
     """
     with airflow_buscar_conexao_mysql(database_id) as mysql_conn:
         with mysql_conn.cursor(cursor_factory=cursors.DictCursor) as cursor:
+            cursor.execute(query, None)
+            return cursor.fetchall()
+
+
+def read_firebird(database_id: str, query: str):
+    """
+        Obtém e resultado de uma consulta no postgresql
+
+        Parâmetros
+        :param query: Query a ser executada no banco
+        :param database_id: Id da database gravada no Airflow
+    """
+    with airflow_buscar_conexao_firebird(database_id) as firebird_conn:
+        with firebird_conn.cursor() as cursor:
             cursor.execute(query, None)
             return cursor.fetchall()
 

@@ -130,3 +130,29 @@ class Jobs_conjel:
         connection = ut.obter_conn_uri(self.datalake_conn)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         self.read_pd_sql(type=conn_type, conn=conn_read, query=query).to_sql(table, engine, schema=schema, if_exists="replace", index=False)
+
+class Questor_OMIE:
+
+    def __init__(self, schema, conn, table):
+        self.schema = schema,
+        self.table = table,
+        self.conn = conn
+
+    def questor(self) -> list:
+        query = f"SELECT * FROM {self.table};"
+        try:
+            print(f"Consultando a tabela {self.table}!")
+            consulta = ut.read_firebird(database_id=self.conn, query=query)
+            print(f"Encontrado {len(consulta)} registros.")
+        except Exception as ex:
+            print(f"Falha! Motivo: {ex}")
+        return consulta
+
+    def datalake(self):
+        connection = self.conn
+        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+        df = pd.DataFrame(self.questor())
+        df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
+
+    def omie():
+        pass

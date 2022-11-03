@@ -143,6 +143,7 @@ class Questor_OMIE:
         query = f"SELECT * FROM {self.table};"
         try:
             print(f"Consultando a tabela {self.table}!")
+            print(f"Execuntando query: {query} na conexão {self.conn_questor}")
             consulta = ut.read_firebird(database_id=self.conn_questor, query=query)
             print(f"Encontrado {len(consulta)} registros.")
         except Exception as ex:

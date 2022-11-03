@@ -135,7 +135,7 @@ def read_firebird(database_id: str, query: str):
     """
     with airflow_buscar_conexao_firebird(database_id) as firebird_conn:
         with firebird_conn.cursor() as cursor:
-            cursor.execute(query, None)
+            cursor.execute(query)
             return cursor.fetchall()
 
 

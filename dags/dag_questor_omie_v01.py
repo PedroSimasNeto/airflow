@@ -40,7 +40,7 @@ with DAG("dag_questor_omie_v01",
             task_id=f"questor_{t}",
             python_callable=dados_questor,
             op_kwargs={
-                "tabelas": f
+                "tabelas": t
             }
         ))
 

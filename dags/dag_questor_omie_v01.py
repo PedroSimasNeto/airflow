@@ -19,7 +19,7 @@ cfg = Variable.get("questor_omie", deserialize_json=True)
 
 
 def dados_questor(tabelas):
-    job = Questor_OMIE(schema="staging", conn_questor="questor", conn_datalake="postgres-datalake", table=tabelas)
+    job = Questor_OMIE(schema="staging", conn_questor=cfg["conn_questor"], conn_datalake=cfg["conn_datalake"], table=tabelas)
     job.datalake()
 
 

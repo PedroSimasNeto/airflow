@@ -37,7 +37,7 @@ with DAG("dag_questor_omie_v01",
 
     for t in cfg["tabelas"]:
         task_questor.append(PythonOperator(
-            task_id=f"questor_{t}"
+            task_id=f"questor_{t}",
             python_callable=dados_questor,
             op_kwargs={
                 "tabelas": f

@@ -133,26 +133,30 @@ class Jobs_conjel:
 
 class Questor_OMIE:
 
-    def __init__(self, schema, conn, table):
+    def __init__(self, schema, conn_questor, conn_datalake, table):
         self.schema = schema
         self.table = table
-        self.conn = conn
+        self.conn_questor = conn_questor
+        self.conn_datalake = conn_datalake
 
     def questor(self) -> list:
-        print(type(self.table))
         query = f"SELECT * FROM {self.table};"
         try:
             print(f"Consultando a tabela {self.table}!")
-            consulta = ut.read_firebird(database_id=self.conn, query=query)
+            consulta = ut.read_firebird(database_id=self.conn_questor, query=query)
             print(f"Encontrado {len(consulta)} registros.")
         except Exception as ex:
             print(f"Falha! Motivo: {ex}")
         return consulta
 
     def datalake(self):
-        connection = ut.obter_conn_uri(self.conn)
+        try: 
+            df = pd.DataFrame(self.questor())
+        except pd.errors.EmptyDataError as ex:
+            print(f"Os dados estão vazios: {ex}")
+        
+        connection = ut.obter_conn_uri(self.conn_datalake)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df = pd.DataFrame(self.questor())
         df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
 
     def omie():

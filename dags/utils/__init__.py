@@ -11,6 +11,7 @@ import psycopg2
 import MySQLdb
 import firebirdsql
 import requests
+import json
 
 
 def obter_conn_uri(database_id):
@@ -21,7 +22,7 @@ def obter_conn_uri(database_id):
         "schema": conn.schema,
         "user": conn.login,
         "password": conn.password,
-        "extra": conn.extra
+        "extra": json.loads(conn.extra)
     }
 
 

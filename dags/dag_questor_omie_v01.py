@@ -9,20 +9,20 @@ from airflow.decorators import task
 from airflow.operators.dummy import DummyOperator
 from airflow.models import Variable
 from datetime import datetime
-# from etl import Questor_OMIE
+from etl import Questor_OMIE
 
 default_args = {
     "owner": "Pedro Simas",
     "start_date": datetime(2022, 11, 1)
 }
 
-# cfg = Variable.get("questor_omie", deserialize_json=True)
+cfg = Variable.get("questor_omie", deserialize_json=True)
 
 
-# @task
-# def dados_questor(tabelas):
-#     job = Questor_OMIE(schema="staging", conn="questor", table=tabelas)
-#     job.datalake()
+@task
+def dados_questor(tabelas):
+    job = Questor_OMIE(schema="staging", conn="questor", table=tabelas)
+    job.datalake()
 
 
 with DAG("dag_questor_omie_v01",
@@ -35,7 +35,7 @@ with DAG("dag_questor_omie_v01",
     inicio = DummyOperator(task_id="inicio")
     fim = DummyOperator(task_id="fim")
 
-    # for t in cfg["tabelas"]:
-    #     task_questor = dados_questor(tabelas=t)
+    for t in cfg["tabelas"]:
+        task_questor = dados_questor(tabelas=t)
 
-    #     inicio >> task_questor >> fim
+        inicio >> task_questor >> fim

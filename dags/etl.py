@@ -138,7 +138,7 @@ class Questor_OMIE:
         self.table = table,
         self.conn = conn
 
-    def questor(self) -> list:
+    def questor(self):
         query = f"SELECT * FROM {self.table};"
         try:
             print(f"Consultando a tabela {self.table}!")

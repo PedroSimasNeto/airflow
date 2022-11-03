@@ -134,11 +134,11 @@ class Jobs_conjel:
 class Questor_OMIE:
 
     def __init__(self, schema, conn, table):
-        self.schema = schema,
-        self.table = table,
+        self.schema = schema
+        self.table = table
         self.conn = conn
 
-    def questor(self):
+    def questor(self) -> list:
         print(type(self.table))
         query = f"SELECT * FROM {self.table};"
         try:

@@ -200,32 +200,35 @@ class Questor_OMIE:
             contrato_cadastro = []
             falha = []
 
-            try:
-                for i in consulta_folha:
-                    print("Buscando dados dos clientes!")
-                    api_post_cliente = omie_api(url_cliente_api, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
-                    if api_post_cliente.status_code == 200:
-                        print("Buscando dados dos contratos do cliente!")
-                        info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
-                        api_post_contrato = omie_api(url_contrato_api, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
-                        try:
-                            if api_post_contrato.status_code == 200:
-                                api_post_json = api_post_contrato.json()["contratoCadastro"]
-                                for item in api_post_json[0]["itensContrato"]:
-                                    if item["itemCabecalho"]["codServMunic"] == codigo_servico_api:
-                                        item["itemCabecalho"]["quant"] = i[1]
-                                    else:
-                                        falha.extend({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
-                                contrato_cadastro.extend(api_post_json)
-                            else:
-                                falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
-                            omie_api(url=url_contrato_api, data_call="AlterarContrato", parametros=contrato_cadastro)
-                        except Exception as ex:
-                            print(ex, i[0])
-                    else:
-                        falha.extend({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
-                return falha
-            except Exception as ex:
-                print(f"Falha! Motivo: {ex}")
+            if consulta_folha:
+                try:
+                    for i in consulta_folha:
+                        print("Buscando dados dos clientes")
+                        api_post_cliente = omie_api(url_cliente_api, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
+                        if api_post_cliente.status_code == 200:
+                            print("Buscando dados dos contratos do cliente")
+                            info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
+                            api_post_contrato = omie_api(url_contrato_api, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
+                            try:
+                                if api_post_contrato.status_code == 200:
+                                    api_post_json = api_post_contrato.json()["contratoCadastro"]
+                                    for item in api_post_json[0]["itensContrato"]:
+                                        if item["itemCabecalho"]["codServMunic"] == codigo_servico_api:
+                                            item["itemCabecalho"]["quant"] = i[1]
+                                        else:
+                                            falha.extend({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
+                                    contrato_cadastro.extend(api_post_json)
+                                else:
+                                    falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
+                                omie_api(url=url_contrato_api, data_call="AlterarContrato", parametros=contrato_cadastro)
+                            except Exception as ex:
+                                print(ex, i[0])
+                        else:
+                            falha.extend({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
+                    return falha
+                except Exception as ex:
+                    print(f"Falha! Motivo: {ex}")
+            else:
+                raise print("Não retornou dados da consulta SQL")
 
         return processamento_api(url_cliente_api=url_cliente, url_contrato_api=url_contrato, codigo_servico_api=codigo_servio)

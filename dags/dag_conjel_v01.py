@@ -37,7 +37,7 @@ def importa_staging_qualyteam(table: str):
 def importa_staging_sankhya(table: str):
     print(f"Importando staging {table}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
-    query = f"SELECT * FROM {table};"
+    query = f"SELECT * FROM {table}"
     job.extract(conn_type="oracle", conn_read=cfg["conn_sankhya"], query=query, table=table, schema="staging")
 
 

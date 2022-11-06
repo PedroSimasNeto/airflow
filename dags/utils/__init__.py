@@ -172,9 +172,9 @@ def api(method: str, url: str, headers: dict, data=None):
         :param headers: Dados de autorização para consultar API
     """
     if method.upper() == "GET":
-        response = requests.get(url, headers=headers, data=data)
+        response = requests.get(url, headers=headers, json=data)
     if method.upper() == "POST":
-        response == requests.post(url, headers=headers, data=data)
+        response == requests.post(url, headers=headers, json=data)
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:

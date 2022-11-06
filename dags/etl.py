@@ -222,12 +222,12 @@ class Questor_OMIE:
                                     falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
                                 omie_api(url=url_contrato_api, data_call="AlterarContrato", parametros=contrato_cadastro)
                             except Exception as ex:
-                                print(ex, i[0])
+                                raise print(ex, i[0])
                         else:
                             falha.extend({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
                     return falha
                 except Exception as ex:
-                    print(f"Falha! Motivo: {ex}")
+                    raise print(f"Falha! Motivo: {ex}")
             else:
                 raise print("Não retornou dados da consulta SQL")
 

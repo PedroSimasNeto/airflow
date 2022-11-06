@@ -163,7 +163,7 @@ def delete_by_condition_pgsql(database_id, query: str):
                 raise ex
 
 
-def api(method: str, url: str, headers: dict, data=None):
+def api(method: str, url: str, headers: dict, json=None):
     """
         Obtém dados via API através de GET
 
@@ -172,9 +172,9 @@ def api(method: str, url: str, headers: dict, data=None):
         :param headers: Dados de autorização para consultar API
     """
     if method.upper() == "GET":
-        response = requests.get(url, headers=headers, json=data)
+        response = requests.get(url, headers=headers, json=json)
     if method.upper() == "POST":
-        response == requests.post(url, headers=headers, json=data)
+        response == requests.post(url, headers=headers, json=json)
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:

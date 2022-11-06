@@ -57,7 +57,7 @@ def read_pgsql(database_id: str, query: str):
         :param query: Query a ser executada no banco
         :param database_id: Id da database gravada no Airflow
     """
-    postgres_hook = PostgresHook(database_id, {"cursor": "dictcursor"})
+    postgres_hook = PostgresHook({"cursor": "dictcursor"}, postgres_conn_id=database_id)
     result = postgres_hook.get_records(sql=query)
     return result
 
@@ -70,7 +70,7 @@ def read_mysql(database_id: str, query: str):
         :param query: Query a ser executada no banco
         :param database_id: Id da database gravada no Airflow
     """
-    mysql_hook = MySqlHook(database_id, {"cursor": "dictcursor"})
+    mysql_hook = MySqlHook({"cursor": "dictcursor"}, mysql_conn_id=database_id)
     result = mysql_hook.get_records(sql=query)
     return result
 

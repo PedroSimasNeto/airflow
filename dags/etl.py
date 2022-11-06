@@ -181,7 +181,7 @@ class Questor_OMIE:
                             inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
                         where p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
                         group by 1"""
-        print(f"Executando a query que retornará a informação que será atualizada na API \n {query_folha}")
+        print(f"Executando a query que retornará a informação que será atualizada na API")
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
         print(f"Consulta obteve {len(consulta_folha)} registros!")
 
@@ -192,6 +192,7 @@ class Questor_OMIE:
                 "app_secret": app_secret,
                 "param": parametros
             }
+            print(data_json)
             url_api = ut.api(method="POST", url=url, headers=headers, json=data_json)
             return url_api
 

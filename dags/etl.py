@@ -112,15 +112,16 @@ class Jobs_conjel:
     def read_pd_sql(self, type, conn, query: str) -> pd:
         try:
             if type == "postgres":
-                connection = ut.obter_conn_uri(conn)
-                engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+                result = ut.read_pgsql(database_id=conn, query=query)
+                return pd.DataFrame(result)
             if type == "mysql":
-                connection = ut.obter_conn_uri(conn)
-                engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+                result = ut.read_mysql(database_id=conn, query=query)
+                return pd.DataFrame(result)
+            if type == "oracle":
+                result = ut.read_oracle(database_id=conn, query=query)
+                return pd.DataFrame(result)
             else:
                 raise print("Tipo inválido!")
-            df = pd.read_sql_query(query, con=engine)
-            return df
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
         except Exception as ex:

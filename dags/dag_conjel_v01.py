@@ -6,7 +6,6 @@ Created on Mon Sept 26 19:00:00 2022
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
-from airflow.decorators import task
 from airflow.models import Variable
 from airflow import DAG
 from datetime import datetime
@@ -21,18 +20,25 @@ default_args = {
 cfg = Variable.get("cfg_conjel", deserialize_json=True)
 
 
-def importa_stating_tareffa(view: str):
+def importa_staging_tareffa(view: str):
     print(f"Importando staging {view}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
     query = f"SELECT * FROM conjel.{view}"
     job.extract(conn_type="postgres", conn_read=cfg["conn_tareffa"], query=query, table=view, schema="staging")
 
 
-def importa_stating_qualyteam(table: str):
+def importa_staging_qualyteam(table: str):
     print(f"Importando staging {table}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
     query = f"SELECT * FROM {table}"
     job.extract(conn_type="mysql", conn_read=cfg["conn_qualyteam"], query=query, table=table, schema="staging")
+
+
+def importa_staging_sankhya(table: str):
+    print(f"Importando staging {table}")
+    job = Jobs_conjel(datalake=cfg["conn_datalake"])
+    query = f"SELECT * FROM {table};"
+    job.extract(conn_type="oracle", conn_read=cfg["conn_sankhya"], query=query, table=table, schema="staging")
 
 
 with DAG("dag_conjel_v01",
@@ -46,9 +52,11 @@ with DAG("dag_conjel_v01",
 
     dummy_tareffa = DummyOperator(task_id="tareffa")
     dummy_qualyteam = DummyOperator(task_id="qualyteam")
+    dummy_sankhya = DummyOperator(task_id="sankhya")
 
     fim_staging_tareffa = DummyOperator(task_id="fim_staging_tareffa")
     fim_staging_qualyteam = DummyOperator(task_id="fim_staging_qualyteam")
+    fim_staging_sankhya = DummyOperator(task_id="fim_staging_sankhya")
 
     fim = DummyOperator(task_id="fim")
 
@@ -57,7 +65,7 @@ with DAG("dag_conjel_v01",
         for v in cfg["views_tareffa"]:
             task_staging.append(PythonOperator(
                 task_id=v,
-                python_callable=importa_stating_tareffa,
+                python_callable=importa_staging_tareffa,
                 op_kwargs={
                     "view": v
                 }
@@ -71,13 +79,25 @@ with DAG("dag_conjel_v01",
         for t in cfg["tables_qualyteam"]:
             task_staging.append(PythonOperator(
                 task_id=t,
-                python_callable=importa_stating_qualyteam,
+                python_callable=importa_staging_qualyteam,
+                op_kwargs={
+                    "table": t
+                }
+            ))
+
+    with TaskGroup("staging_sankhya") as task_staging_sankhya:
+        task_staging = []
+        for t in cfg["tables_sankhya"]:
+            task_staging.append(PythonOperator(
+                task_id=t,
+                python_callable=importa_staging_sankhya,
                 op_kwargs={
                     "table": t
                 }
             ))
     
 
-    inicio >> [dummy_tareffa, dummy_qualyteam]
+    inicio >> [dummy_tareffa, dummy_qualyteam, dummy_sankhya]
     dummy_tareffa >> task_staging_tareffa >> fim_staging_tareffa >> task_dimensoes_tareffa >> fim
     dummy_qualyteam >> task_staging_qualyteam  >> fim_staging_qualyteam >> fim
+    dummy_sankhya >> task_staging_sankhya >> fim_staging_sankhya >> fim

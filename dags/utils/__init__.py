@@ -4,11 +4,14 @@ Created on Mon Jun 14 20:00:00 2022
 @author: Pedro Simas Neto
 """
 from airflow.providers.telegram.operators.telegram import TelegramOperator
+from airflow.providers.oracle.hooks.oracle import OracleHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.providers.mysql.hooks.mysql import MySqlHook
 from airflow.hooks.base import BaseHook
-import psycopg2.extras as extras
-import MySQLdb.cursors as cursors
-import psycopg2
-import MySQLdb
+# import psycopg2.extras as extras
+# import MySQLdb.cursors as cursors
+# import psycopg2
+# import MySQLdb
 import firebirdsql
 import requests
 import json
@@ -24,44 +27,6 @@ def obter_conn_uri(database_id):
         "password": conn.password,
         "extra": conn.extra
     }
-
-
-def airflow_buscar_conexao_postgres(database_id):
-    """
-            Retorna conexão com o postgres usando as configurações gravadas na metabase do airflow.
-
-            Parâmetros
-            - database_id (str) : Id da database gravada no airflow.
-
-            Retorno
-            - Conexao com o Postgres.
-            """
-    config_db = obter_conn_uri(database_id)
-    conn = psycopg2.connect(host=config_db["host"],
-                            port=config_db["port"],
-                            database=config_db["schema"],
-                            user=config_db["user"],
-                            password=config_db["password"])
-    return conn
-
-
-def airflow_buscar_conexao_mysql(database_id):
-    """
-            Retorna conexão com o postgres usando as configurações gravadas na metabase do airflow.
-
-            Parâmetros
-            - database_id (str) : Id da database gravada no airflow.
-
-            Retorno
-            - Conexao com o MySQL.
-            """
-    config_db = obter_conn_uri(database_id)
-    conn = MySQLdb.connect(host=config_db["host"],
-                           port=config_db["port"],
-                           database=config_db["schema"],
-                           user=config_db["user"],
-                           password=config_db["password"])
-    return conn
 
 
 def airflow_buscar_conexao_firebird(database_id):
@@ -84,20 +49,6 @@ def airflow_buscar_conexao_firebird(database_id):
     return conn
 
 
-def truncate_pgsql(database_id: str, table: str):
-    """
-        Trunca os dados da tabela no postgresql
-
-        Parâmetros
-        :param table: Tabela que será truncada
-        :param database_id: Id da database gravada no Airflow
-    """
-    with airflow_buscar_conexao_postgres(database_id) as pgsql_conn:
-        with pgsql_conn.cursor() as cursor:
-            cursor.execute(f"TRUNCATE TABLE {table};")
-            pgsql_conn.commit()
-
-
 def read_pgsql(database_id: str, query: str):
     """
         Obtém o resultado de uma consulta no PostgreSQL
@@ -106,10 +57,9 @@ def read_pgsql(database_id: str, query: str):
         :param query: Query a ser executada no banco
         :param database_id: Id da database gravada no Airflow
     """
-    with airflow_buscar_conexao_postgres(database_id) as pgsql_conn:
-        with pgsql_conn.cursor(cursor_factory=extras.DictCursor) as cursor:
-            cursor.execute(query, None)
-            return cursor.fetchall()
+    postgres_hook = PostgresHook(database_id, {"cursor": "dictcursor"})
+    result = postgres_hook.get_records(sql=query)
+    return result
 
 
 def read_mysql(database_id: str, query: str):
@@ -120,10 +70,9 @@ def read_mysql(database_id: str, query: str):
         :param query: Query a ser executada no banco
         :param database_id: Id da database gravada no Airflow
     """
-    with airflow_buscar_conexao_mysql(database_id) as mysql_conn:
-        with mysql_conn.cursor(cursor_factory=cursors.DictCursor) as cursor:
-            cursor.execute(query, None)
-            return cursor.fetchall()
+    mysql_hook = MySqlHook(database_id, {"cursor": "dictcursor"})
+    result = mysql_hook.get_records(sql=query)
+    return result
 
 
 def read_firebird(database_id: str, query: str):
@@ -140,6 +89,31 @@ def read_firebird(database_id: str, query: str):
             return cursor.fetchall()
 
 
+def read_oracle(database_id: str, query: str):
+    """
+        Obtém o resultado de uma consulta no Oracle
+        
+        Parâmetros
+        :param query: Query a ser executada no banco
+        :param database_id: Id da database gravada no Airflow
+    """
+    oracle_hook = OracleHook(oracle_conn_id=database_id)
+    result = oracle_hook.get_records(sql=query)
+    return result
+
+
+def truncate_pgsql(database_id: str, table: str):
+    """
+        Trunca os dados da tabela no postgresql
+
+        Parâmetros
+        :param table: Tabela que será truncada
+        :param database_id: Id da database gravada no Airflow
+    """
+    postgres_hook = PostgresHook(database_id)
+    postgres_hook.run(sql=f"TRUNCATE TABLE {table};", autocommit=True)
+
+
 def delete_by_condition_pgsql(database_id, query: str):
     """
         Deleta dados de uma tabela no postgresql com ou sem condição
@@ -151,16 +125,8 @@ def delete_by_condition_pgsql(database_id, query: str):
     if not 'WHERE' in query:
         raise Exception("Are you trying to do a delete action without a condition? This can't be executed!")
 
-    with airflow_buscar_conexao_postgres(database_id) as conn:
-        with conn.cursor() as c:
-            try:
-                print(f'Executando query: "{query}"')
-                c.execute(query, None)
-                conn.commit()
-            except Exception as ex:
-                print(f'Excecao ao deletar dados no PostgreSQL: {str(ex)}')
-                conn.rollback()
-                raise ex
+    postgres_hook = PostgresHook(database_id)
+    postgres_hook.run(sql=query, autocommit=True)
 
 
 def api(method: str, url: str, headers: dict, json=None, **kwargs):

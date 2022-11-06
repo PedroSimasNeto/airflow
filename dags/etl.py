@@ -155,6 +155,7 @@ class Questor_OMIE:
         df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
 
     def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, headers: dict, app_key: str, app_secret: str, codigo_servio: str):
+        print("Executando a query que retornará a informação que será atualizada na API.")
         query_folha = f"""
                         select
                             CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
@@ -194,13 +195,16 @@ class Questor_OMIE:
             return url_api
         
         
-        def processamento_api(url_contrato_api: str, url_cliente_api: str, codigo_servico_api: str):            
+        def processamento_api(url_contrato_api: str, url_cliente_api: str, codigo_servico_api: str):
+            print("Iniciando processamento da API!")
             contrato_cadastro = []
             falha = []
 
             for i in consulta_folha:
+                print("Buscando dados dos clientes!")
                 api_post_cliente = omie_api(url_cliente_api, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
                 if api_post_cliente.status_code == 200:
+                    print("Buscando dados dos contratos do cliente!")
                     info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
                     api_post_contrato = omie_api(url_contrato_api, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
                     try:

@@ -155,7 +155,7 @@ class Questor_OMIE:
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
 
-    def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, headers: dict, app_key: str, app_secret: str, codigo_servio: str):
+    def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, app_key: str, app_secret: str, codigo_servico: str):
         query_folha = f"""
                         select
                             CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
@@ -186,6 +186,7 @@ class Questor_OMIE:
         print(f"Consulta obteve {len(consulta_folha)} registros!")
 
         def omie_api(url: str, data_call: str, parametros: list):
+            headers={'Content-Type': 'application/json'}
             data_json = {
                 "call": data_call,
                 "app_key": app_key,
@@ -193,10 +194,10 @@ class Questor_OMIE:
                 "param": parametros
             }
             print(data_json)
-            url_api = ut.api(method="POST", url=url, headers=headers, json=data_json)
+            url_api = ut.api(method="POST", url=url, headers=headers, json=data_json, verify=False)
             return url_api
 
-        def processamento_api(url_contrato_api: str, url_cliente_api: str, codigo_servico_api: str):
+        def processamento_api():
             print("Iniciando processamento da API!")
             contrato_cadastro = []
             falha = []
@@ -205,23 +206,23 @@ class Questor_OMIE:
                 try:
                     for i in consulta_folha:
                         print("Buscando dados dos clientes")
-                        api_post_cliente = omie_api(url_cliente_api, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
+                        api_post_cliente = omie_api(url_cliente, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
                         if api_post_cliente.status_code == 200:
                             print("Buscando dados dos contratos do cliente")
                             info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
-                            api_post_contrato = omie_api(url_contrato_api, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
+                            api_post_contrato = omie_api(url_contrato, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
                             try:
                                 if api_post_contrato.status_code == 200:
                                     api_post_json = api_post_contrato.json()["contratoCadastro"]
                                     for item in api_post_json[0]["itensContrato"]:
-                                        if item["itemCabecalho"]["codServMunic"] == codigo_servico_api:
+                                        if item["itemCabecalho"]["codServMunic"] == codigo_servico:
                                             item["itemCabecalho"]["quant"] = i[1]
                                         else:
                                             falha.extend({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
                                     contrato_cadastro.extend(api_post_json)
                                 else:
                                     falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
-                                omie_api(url=url_contrato_api, data_call="AlterarContrato", parametros=contrato_cadastro)
+                                omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
                             except Exception as ex:
                                 raise print(ex, i[0])
                         else:
@@ -232,4 +233,4 @@ class Questor_OMIE:
             else:
                 raise print("Não retornou dados da consulta SQL")
 
-        return processamento_api(url_cliente_api=url_cliente, url_contrato_api=url_contrato, codigo_servico_api=codigo_servio)
+        return processamento_api()

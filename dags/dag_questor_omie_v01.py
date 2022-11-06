@@ -18,11 +18,20 @@ default_args = {
 }
 
 cfg = Variable.get("questor_omie", deserialize_json=True)
+cfg_omie_secrets = Variable.get("api_omie_secrets", deserialize_json=True)
 
 
 def dados_questor(tabelas):
     job = Questor_OMIE(schema="staging", conn_questor=cfg["conn_questor"], conn_datalake=cfg["conn_datalake"], table=tabelas)
     job.datalake()
+
+
+def _processamento_api(**kwargs):
+    job = Questor_OMIE(conn_datalake=cfg["conn_datalake"])
+    omie_api = job.omie(data_competencia=kwargs["next_ds"], url_contrato=cfg["url_contrato"], url_cliente=cfg["url_cliente"],
+                        headers={'Content-Type': 'application/json'}, 
+                        app_key=cfg_omie_secrets["app_key"], app_secret=cfg_omie_secrets["app_secret"], codigo_servio=cfg["codigo_servico"])
+    return omie_api
 
 
 with DAG("dag_questor_omie_v01",
@@ -49,4 +58,9 @@ with DAG("dag_questor_omie_v01",
     with TaskGroup("dimensoes") as task_dimensoes:
         dimensoes_questor()
 
-    inicio >> task_group_questor >> task_dimensoes >> fim
+    task_processamento_api = PythonOperator(
+        task_id="processamento_api",
+        python_callable=_processamento_api
+    )
+
+    inicio >> task_group_questor >> task_dimensoes >> task_processamento_api >> fim

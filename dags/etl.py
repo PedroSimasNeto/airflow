@@ -19,7 +19,7 @@ class Jobs_c8sgestao:
         self.database_job = database
 
     def st_importar_condominios(self, table: str, schema: str):
-        response = ut.get_api(url=self.url_job, headers=self.header_job)
+        response = ut.api(method="GET", url=self.url_job, headers=self.header_job)
 
         # Transformado o retorno da API em Dataframe Pandas.
         df_condominio = pd.DataFrame(response.json())
@@ -65,7 +65,7 @@ class Jobs_c8sgestao:
                         data_periodo = d1.strftime("%m/%d/%Y")
                         # Criando a URL para buscar na API por condomínio e por dia.
                         url_completa = self.url_job + f"idCondominio={d2}&dtInicio={data_periodo}&dtFim={data_periodo}&agrupadoPorMes=0"
-                        response = ut.get_api(url=url_completa, headers=self.header_job)
+                        response = ut.api(method="GET", url=url_completa, headers=self.header_job)
                         if response.status_code == 200:
                             response_json = response.json()
                             if response_json:
@@ -133,7 +133,7 @@ class Jobs_conjel:
 
 class Questor_OMIE:
 
-    def __init__(self, schema: str, conn_questor: str, conn_datalake: str, table: str):
+    def __init__(self, schema: str = None, conn_questor: str = None, conn_datalake: str = None, table: str = None):
         self.schema = schema
         self.table = table
         self.conn_questor = conn_questor
@@ -154,8 +154,7 @@ class Questor_OMIE:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
 
-    def omie(self, data_competencia):
-        data_competencia_atual = data_competencia - relativedelta(months=1)
+    def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, headers: dict, app_key: str, app_secret: str, codigo_servio: str):
         query_folha = f"""
                         select
                             CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
@@ -179,9 +178,47 @@ class Questor_OMIE:
                             inner join CONJEL.QUESTOR_DIM_estab f on f.codigoempresa = c.codigoempresa
                                                                  and f.codigoestab = 1
                             inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
-                        where p.datainicialfolha = {data_competencia_atual}
+                        where p.datainicialfolha = cast('{data_competencia}' as date) - interval '1 Month'
                         group by 1"""
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
-            
         
-        pass
+        
+        def omie_api(url: str, data_call: str, parametros: list):
+            data_json = {
+                "call": data_call,
+                "app_key": app_key,
+                "app_secret": app_secret,
+                "param": parametros
+            }
+            url_api = ut.api(method="POST", url=url, headers=headers, json=data_json)
+            return url_api
+        
+        
+        def processamento_api(url_contrato_api: str, url_cliente_api: str, codigo_servico_api: str):            
+            contrato_cadastro = []
+            falha = []
+
+            for i in consulta_folha:
+                api_post_cliente = omie_api(url_cliente_api, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
+                if api_post_cliente.status_code == 200:
+                    info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
+                    api_post_contrato = omie_api(url_contrato_api, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
+                    try:
+                        if api_post_contrato.status_code == 200:
+                            api_post_json = api_post_contrato.json()["contratoCadastro"]
+                            for item in api_post_json[0]["itensContrato"]:
+                                if item["itemCabecalho"]["codServMunic"] == codigo_servico_api:
+                                    item["itemCabecalho"]["quant"] = i[1]
+                                else:
+                                    falha.extend({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
+                            contrato_cadastro.extend(api_post_json)
+                        else:
+                            falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
+                        omie_api(url=url_contrato_api, data_call="AlterarContrato", parametros=contrato_cadastro)
+                    except Exception as ex:
+                        print(ex, i[0])
+                else:
+                    falha.extend({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
+            return falha
+        
+        return processamento_api(url_cliente_api=url_cliente, url_contrato_api=url_contrato, codigo_servico_api=codigo_servio)

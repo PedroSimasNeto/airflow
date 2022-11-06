@@ -174,7 +174,7 @@ def api(method: str, url: str, headers: dict, json=None):
     if method.upper() == "GET":
         response = requests.get(url, headers=headers, json=json)
     if method.upper() == "POST":
-        response == requests.post(url, headers=headers, json=json)
+        response = requests.post(url, headers=headers, json=json)
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:

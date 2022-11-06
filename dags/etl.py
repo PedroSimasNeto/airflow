@@ -88,7 +88,6 @@ class Jobs_c8sgestao:
                 Variable.update("condominios_atualizacao", update_variable, serialize_json=True)
                 raise print(f"ERROR! Causa: {ex}")
 
-    
         # Analise para verificar se já teve tentativa na mesma data de execução.
         if data_ult_processamento == dt_execucao:
             # Delete dos dados possíveis processados do condomínio
@@ -100,9 +99,10 @@ class Jobs_c8sgestao:
         else:
             # Truncate na staging
             ut.truncate_pgsql(self.database_job, table=schema + '.' + table)
-            
+
             print(f"Será processados {len(dado_condominio)} condomínios")
             _processamento_condominios(dado_condominio)
+
 
 class Jobs_conjel:
 
@@ -120,16 +120,17 @@ class Jobs_conjel:
             else:
                 raise print("Tipo inválido!")
             df = pd.read_sql_query(query, con=engine)
+            return df
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
         except Exception as ex:
             print(f"Falha! Motivo: {ex}")
-        return df
 
     def extract(self, conn_type, conn_read, query: str, table: str, schema: str):
         connection = ut.obter_conn_uri(self.datalake_conn)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         self.read_pd_sql(type=conn_type, conn=conn_read, query=query).to_sql(table, engine, schema=schema, if_exists="replace", index=False)
+
 
 class Questor_OMIE:
 
@@ -145,14 +146,14 @@ class Questor_OMIE:
         return consulta
 
     def datalake(self):
-        try: 
-            df = pd.DataFrame(self.questor())
-        except pd.errors.EmptyDataError as ex:
-            print(f"Os dados estão vazios: {ex}")
-        
         connection = ut.obter_conn_uri(self.conn_datalake)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
+
+        try:
+            df = pd.DataFrame(self.questor())
+            df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
+        except pd.errors.EmptyDataError as ex:
+            print(f"Os dados estão vazios: {ex}")
 
     def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, headers: dict, app_key: str, app_secret: str, codigo_servio: str):
         print("Executando a query que retornará a informação que será atualizada na API.")
@@ -182,8 +183,8 @@ class Questor_OMIE:
                         where p.datainicialfolha = cast('{data_competencia}' as date) - interval '1 Month'
                         group by 1"""
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
-        
-        
+        print(f"Consulta obteve {len(consulta_folha)} registros!")
+
         def omie_api(url: str, data_call: str, parametros: list):
             data_json = {
                 "call": data_call,
@@ -193,8 +194,7 @@ class Questor_OMIE:
             }
             url_api = ut.api(method="POST", url=url, headers=headers, json=data_json)
             return url_api
-        
-        
+
         def processamento_api(url_contrato_api: str, url_cliente_api: str, codigo_servico_api: str):
             print("Iniciando processamento da API!")
             contrato_cadastro = []
@@ -227,5 +227,5 @@ class Questor_OMIE:
                 return falha
             except Exception as ex:
                 print(f"Falha! Motivo: {ex}")
-        
+
         return processamento_api(url_cliente_api=url_cliente, url_contrato_api=url_contrato, codigo_servico_api=codigo_servio)

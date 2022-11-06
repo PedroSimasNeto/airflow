@@ -140,7 +140,7 @@ class Questor_OMIE:
         self.conn_datalake = conn_datalake
 
     def questor(self) -> list:
-        query = f"SELECT * FROM {self.table};"
+        query = f"SELECT t.*, current_date as data_execucao FROM {self.table} t;"
         consulta = ut.read_firebird(database_id=self.conn_questor, query=query)
         return consulta
 
@@ -154,5 +154,34 @@ class Questor_OMIE:
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         df.to_sql(self.table, engine, schema=self.schema, if_exists="replace", index=False)
 
-    def omie():
+    def omie(self, data_competencia):
+        data_competencia_atual = data_competencia - relativedelta(months=1)
+        query_folha = f"""
+                        select
+                            CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
+                                ELSE f.inscrfederal END CNPJ,
+                            CASE WHEN count (distinct (c.codigofunccontr)) = 1 THEN 2
+                                 ELSE count (distinct (c.codigofunccontr)) END as "folhas"
+                        from CONJEL.QUESTOR_DIM_funcpercalculo c
+                            inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
+                                                                          and p.codigopercalculo = c.codigopercalculo
+                            inner join (select codigoempresa as codemp,
+                                            codigofunccontr as codfunc,
+                                            max (datatransf) as datafunc
+                                        from CONJEL.QUESTOR_DIM_funclocal
+                                        group by 1,2) h on h.codemp = c.codigoempresa
+                                                       and h.codfunc = c.codigofunccontr
+                            inner join CONJEL.QUESTOR_DIM_funclocal l on l.codigoempresa = c.codigoempresa
+                                                                     and l.codigofunccontr = c.codigofunccontr
+                                                                     and l.datatransf = h.datafunc
+                            inner join CONJEL.QUESTOR_DIM_estab e on e.codigoempresa = l.codigoempresa
+                                                                 and e.codigoestab = l.codigoestab
+                            inner join CONJEL.QUESTOR_DIM_estab f on f.codigoempresa = c.codigoempresa
+                                                                 and f.codigoestab = 1
+                            inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
+                        where p.datainicialfolha = {data_competencia_atual}
+                        group by 1"""
+        consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
+            
+        
         pass

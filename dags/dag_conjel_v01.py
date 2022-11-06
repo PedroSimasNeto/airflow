@@ -11,7 +11,7 @@ from airflow.models import Variable
 from airflow import DAG
 from datetime import datetime
 from etl import Jobs_conjel
-from script_sql import dimensoes_tareffa
+from sql.script_sql import dimensoes_tareffa
 
 default_args = {
     "owner": "Pedro Simas",

@@ -214,15 +214,15 @@ class Questor_OMIE:
                                     if item["itemCabecalho"]["codServMunic"] == codigo_servico:
                                         item["itemCabecalho"]["quant"] = i[1]
                                     else:
-                                        falha.extend({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
+                                        falha.append({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
                                 contrato_cadastro.extend(api_post_json)
                             else:
-                                falha.extend({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
+                                falha.append({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
                             omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
                         except Exception as ex:
                             raise print(ex, i[0])
                     else:
-                        falha.extend({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
+                        falha.append({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
                 return falha
             else:
                 raise print("Não retornou dados da consulta SQL")

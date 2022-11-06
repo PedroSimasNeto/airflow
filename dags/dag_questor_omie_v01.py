@@ -30,6 +30,7 @@ def _processamento_api(**kwargs):
     job = Questor_OMIE(conn_datalake=cfg["conn_datalake"])
     omie_api = job.omie(data_competencia=kwargs["next_ds"], url_contrato=cfg["url_contrato"], url_cliente=cfg["url_cliente"], 
                         app_key=cfg_omie_secrets["app_key"], app_secret=cfg_omie_secrets["app_secret"], codigo_servico=cfg["codigo_servico"])
+    print("Finalizado processamento da API!")    
     return omie_api
 
 

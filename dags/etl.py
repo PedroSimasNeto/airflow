@@ -203,10 +203,8 @@ class Questor_OMIE:
 
             if consulta_folha:
                 for i in consulta_folha:
-                    print("Buscando dados dos clientes")
                     api_post_cliente = omie_api(url_cliente, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
                     if api_post_cliente.status_code == 200:
-                        print("Buscando dados dos contratos do cliente")
                         info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
                         api_post_contrato = omie_api(url_contrato, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
                         try:

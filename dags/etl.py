@@ -156,7 +156,6 @@ class Questor_OMIE:
             print(f"Os dados estão vazios: {ex}")
 
     def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, headers: dict, app_key: str, app_secret: str, codigo_servio: str):
-        print("Executando a query que retornará a informação que será atualizada na API.")
         query_folha = f"""
                         select
                             CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
@@ -182,6 +181,7 @@ class Questor_OMIE:
                             inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
                         where p.datainicialfolha = cast('{data_competencia}' as date) - interval '1 Month'
                         group by 1"""
+        print(f"Executando a query que retornará a informação que será atualizada na API \n {query_folha}")
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
         print(f"Consulta obteve {len(consulta_folha)} registros!")
 

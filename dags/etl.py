@@ -179,7 +179,7 @@ class Questor_OMIE:
                             inner join CONJEL.QUESTOR_DIM_estab f on f.codigoempresa = c.codigoempresa
                                                                  and f.codigoestab = 1
                             inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
-                        where p.datainicialfolha = cast('{data_competencia}' as date) - interval '1 Month'
+                        where p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
                         group by 1"""
         print(f"Executando a query que retornará a informação que será atualizada na API \n {query_folha}")
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)

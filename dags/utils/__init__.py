@@ -8,10 +8,8 @@ from airflow.providers.oracle.hooks.oracle import OracleHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 from airflow.hooks.base import BaseHook
-# import psycopg2.extras as extras
-# import MySQLdb.cursors as cursors
-# import psycopg2
-# import MySQLdb
+import psycopg2.extras as extras
+import MySQLdb.cursors as cursors
 import firebirdsql
 import requests
 import json
@@ -58,7 +56,8 @@ def read_pgsql(database_id: str, query: str):
         :param database_id: Id da database gravada no Airflow
     """
     postgres_hook = PostgresHook(postgres_conn_id=database_id)
-    result = postgres_hook.get_records(sql=query)
+    get_conn = postgres_hook.get_conn().cursor()
+    result = get_conn.execute(query=query)
     return result
 
 
@@ -71,7 +70,8 @@ def read_mysql(database_id: str, query: str):
         :param database_id: Id da database gravada no Airflow
     """
     mysql_hook = MySqlHook(mysql_conn_id=database_id)
-    result = mysql_hook.get_records(sql=query)
+    get_conn = mysql_hook.get_conn()
+    result = get_conn._execute_query(query=query)
     return result
 
 

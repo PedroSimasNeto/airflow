@@ -15,5 +15,6 @@ USER airflow
 
 RUN pip install pip install --no-cache-dir apache-airflow-providers-telegram==3.0.0 \
     pip install apache-airflow-providers-oracle==3.4.0 \
+    cx_Oracle==8.3.0 \
     apache-airflow[microsoft.mssql]==2.3.2 \
     firebirdsql==1.2.2

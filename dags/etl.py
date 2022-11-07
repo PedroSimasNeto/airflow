@@ -112,20 +112,22 @@ class Jobs_conjel:
     def read_pd_sql(self, type, conn, query: str) -> pd:
         try:
             if type == "postgres":
-                result = ut.read_pgsql(database_id=conn, query=query)
-                return pd.DataFrame(result)
+                connection = ut.obter_conn_uri(conn)
+                engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
             if type == "mysql":
-                result = ut.read_mysql(database_id=conn, query=query)
-                return pd.DataFrame(result)
+                connection = ut.obter_conn_uri(conn)
+                engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
             if type == "oracle":
-                result = ut.read_oracle(database_id=conn, query=query)
-                return pd.DataFrame(result)
+                connection = ut.obter_conn_uri(conn)
+                engine = create_engine(f'oracle+cx_oracle://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
             else:
                 raise print("Tipo inválido!")
+            df = pd.read_sql_query(query, con=engine)
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
         except Exception as ex:
             print(f"Falha! Motivo: {ex}")
+        return df
 
     def extract(self, conn_type, conn_read, query: str, table: str, schema: str):
         connection = ut.obter_conn_uri(self.datalake_conn)

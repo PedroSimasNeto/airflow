@@ -56,9 +56,11 @@ def read_pgsql(database_id: str, query: str):
         :param database_id: Id da database gravada no Airflow
     """
     postgres_hook = PostgresHook(postgres_conn_id=database_id)
-    get_conn = postgres_hook.get_conn().cursor()
-    result = get_conn.execute(query=query)
-    return result
+    with postgres_hook.get_conn() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query=query)
+            result = cursor.fetchall()
+            return result
 
 
 def read_mysql(database_id: str, query: str):

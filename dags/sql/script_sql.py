@@ -223,6 +223,20 @@ def dimensoes_questor():
         ]
     )
 
+    task_empresasegmento = PostgresOperator(
+        task_id="funclocal",
+        postgres_conn_id="postgres-datalake",
+        sql=["TRUNCATE TABLE CONJEL.QUESTOR_DIM_EMPRESASEGMENTO",
+            """
+            INSERT INTO CONJEL.QUESTOR_DIM_EMPRESASEGMENTO
+            select
+                "0" as codigoempresa, "1" as seq, cast("2" as date) as DATAINICIOSEGMENTO, "3" as CODIGOESTAB, "4" as CODIGOSEGMENTO,
+                cast("5" as date) as DATAFIMSEGMENTO, "6" as OBSERVACAOSEGMENTO, "7" as CODIGOUSUARIO, "8" as DATAHORAALTERACAO
+            from staging.empresasegmento;
+            """
+        ]
+    )
+
     fim = DummyOperator(task_id="fim")
 
-    inicio >> [task_periodocalculo, task_estab, task_funcpercalculo, task_usuario, task_funclocal] >> fim
+    inicio >> [task_periodocalculo, task_estab, task_funcpercalculo, task_usuario, task_funclocal, task_empresasegmento] >> fim

@@ -224,7 +224,7 @@ def dimensoes_questor():
     )
 
     task_empresasegmento = PostgresOperator(
-        task_id="funclocal",
+        task_id="empresasegmento",
         postgres_conn_id="postgres-datalake",
         sql=["TRUNCATE TABLE CONJEL.QUESTOR_DIM_EMPRESASEGMENTO",
             """

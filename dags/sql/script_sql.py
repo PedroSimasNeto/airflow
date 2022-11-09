@@ -204,7 +204,8 @@ def dimensoes_questor():
                 cast("19" as bytea) as FOTOUSUARIO, "20" as STATUSSINCZEN, "21" as ACEITETERMO
             from staging.usuario;
             """
-        ]
+        ],
+        autocommit=True
     )
 
     task_funclocal = PostgresOperator(
@@ -220,7 +221,8 @@ def dimensoes_questor():
                 "15" as TIPOADM, "16" as TIPOTRANSF, "17" as INDICATADM, "18" as NUMEROPROCESSO, "19" as TIPOALTERACAOESOCIAL
             from staging.funclocal;
             """
-        ]
+        ],
+        autocommit=True
     )
 
     task_empresasegmento = PostgresOperator(
@@ -234,7 +236,22 @@ def dimensoes_questor():
                 cast("5" as date) as DATAFIMSEGMENTO, "6" as OBSERVACAOSEGMENTO, "7" as CODIGOUSUARIO, "8" as DATAHORAALTERACAO
             from staging.empresasegmento;
             """
-        ]
+        ],
+        autocommit=True
+    )
+
+    task_empresa = PostgresOperator(
+        task_id="empresa",
+        postgres_conn_id="postgres-datalake",
+        sql=["TRUNCATE TABLE CONJEL.QUESTOR_DIM_EMPRESA",
+            """
+            INSERT INTO CONJEL.QUESTOR_DIM_EMPRESA
+            select 
+                "0" as codigoempresa, "1" as MARCADAGUAEMPRESA, "2" as NOMEEMPRESA, "3" as LOGOTIPOEMPRESA
+            from staging.empresa;
+            """
+        ],
+        autocommit=True
     )
 
     fim = DummyOperator(task_id="fim")

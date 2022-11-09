@@ -162,32 +162,34 @@ class Questor_OMIE:
         except pd.errors.EmptyDataError as ex:
             print(f"Os dados estão vazios: {ex}")
 
-    def omie(self, data_competencia: str, url_contrato: str, url_cliente: str, app_key: str, app_secret: str, codigo_servico: str):
+    def omie(self, data_competencia: str, url_contrato: str, url_servico: str, app_key: str, app_secret: str, codigo_servico: str):
         query_folha = f"""
                         select
-                            CASE WHEN f.inscrfederal = e.inscrfederal THEN f.inscrfederal
-                                ELSE f.inscrfederal END CNPJ,
-                            CASE WHEN count (distinct (c.codigofunccontr)) = 1 THEN 2
-                                 ELSE count (distinct (c.codigofunccontr)) END as "folhas"
+                            current_date as data_processamento,
+                            datainicialfolha,
+                            e.nomeempresa as empresa,
+                            substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for 10) as contrato,
+                            substring(observacaosegmento from position('CNPJ:' in observacaosegmento) +5) as cnpj,
+                            count(distinct (c.codigofunccontr)) as folhas_apuradas
                         from CONJEL.QUESTOR_DIM_funcpercalculo c
-                            inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
-                                                                          and p.codigopercalculo = c.codigopercalculo
-                            inner join (select codigoempresa as codemp,
-                                            codigofunccontr as codfunc,
-                                            max (datatransf) as datafunc
-                                        from CONJEL.QUESTOR_DIM_funclocal
-                                        group by 1,2) h on h.codemp = c.codigoempresa
-                                                       and h.codfunc = c.codigofunccontr
-                            inner join CONJEL.QUESTOR_DIM_funclocal l on l.codigoempresa = c.codigoempresa
-                                                                     and l.codigofunccontr = c.codigofunccontr
-                                                                     and l.datatransf = h.datafunc
-                            inner join CONJEL.QUESTOR_DIM_estab e on e.codigoempresa = l.codigoempresa
-                                                                 and e.codigoestab = l.codigoestab
-                            inner join CONJEL.QUESTOR_DIM_estab f on f.codigoempresa = c.codigoempresa
-                                                                 and f.codigoestab = 1
-                            inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
+                        inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
+                                                                    and p.codigopercalculo = c.codigopercalculo
+                        inner join (select codigoempresa as codemp,
+                                        codigofunccontr as codfunc,
+                                        max (datatransf) as datafunc
+                                    from CONJEL.QUESTOR_DIM_funclocal
+                                    group by 1,2) h on h.codemp = c.codigoempresa
+                                                and h.codfunc = c.codigofunccontr
+                        inner join CONJEL.QUESTOR_DIM_funclocal l on l.codigoempresa = c.codigoempresa
+                                                                and l.codigofunccontr = c.codigofunccontr
+                                                                and l.datatransf = h.datafunc    
+                        inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = c.codigoempresa
+                        inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
+                        inner join CONJEL.QUESTOR_DIM_empresasegmento es on es.codigoempresa = c.codigoempresa 
+                                                                        and es.CODIGOSEGMENTO in (19)
+                                                                        and es.datafimsegmento is null
                         where p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
-                        group by 1"""
+                        group by 1,2,3,4,5"""
         print(f"Executando a query que retornará a informação que será atualizada na API")
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
         print(f"Consulta obteve {len(consulta_folha)} registros!")
@@ -210,26 +212,29 @@ class Questor_OMIE:
 
             if consulta_folha:
                 for i in consulta_folha:
-                    api_post_cliente = omie_api(url_cliente, data_call="ListarClientesResumido", parametros=[{"clientesFiltro": {"cnpj_cpf": i[0]}}])
-                    if api_post_cliente.status_code == 200:
-                        info_cliente = {"cnpj_cpf": i[0], "codigo_cliente": api_post_cliente.json()["clientes_cadastro_resumido"][0]["codigo_cliente"]}
-                        api_post_contrato = omie_api(url_contrato, data_call="ListarContratos", parametros=[{"filtrar_cliente": info_cliente["codigo_cliente"]}])
-                        try:
-                            if api_post_contrato.status_code == 200:
-                                api_post_json = api_post_contrato.json()["contratoCadastro"]
-                                for item in api_post_json[0]["itensContrato"]:
-                                    if item["itemCabecalho"]["codServMunic"] == codigo_servico:
-                                        item["itemCabecalho"]["quant"] = i[1]
-                                    else:
-                                        falha.append({"cnpj_cpf": i[0], "detalhe": "Não encontrado o item no contrato!", "etapa": "Busca o item no contrato"})
-                                contrato_cadastro.extend(api_post_json)
-                            else:
-                                falha.append({"cnpj_cpj": i[0], "detalhe": api_post_contrato.text, "etapa": "Busca o contrato do cliente"})
-                            omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
-                        except Exception as ex:
-                            raise print(ex, i[0])
-                    else:
-                        falha.append({"cnpj_cnpj": i[0], "detalhe": api_post_cliente.text, "etapa": "Busca cadastro do cliente"})
+                    api_post_contrato = omie_api(url_contrato, data_call="ListarContratos", parametros=[{"filtrar_cnpj_cpf": i[4]}])
+                    api_post_servico = omie_api(url_servico, data_call="ListarCadastroServico", parametros=[{"cCodigo": codigo_servico}])
+                    api_post_servico_json = api_post_servico.json()["cadastros"][0]["intListar"]["nCodServ"]
+                    try:
+                        if api_post_contrato.status_code == 200:
+                            api_post_json = api_post_contrato.json()["contratoCadastro"]
+                            for cabecalho in api_post_json:
+                                api_post_numero_contrato = omie_api(url_contrato, data_call="ConsultarContrato", parametros=[{"contratoChave": {"nCodCtr": cabecalho["cabecalho"]["nCodCtr"]}}])
+                                if api_post_numero_contrato.status_code == 200 and api_post_numero_contrato.json()["contratoCadastro"]["cabecalho"]["cNumCtr"] == i[3]:
+                                    api_post_numero_contrato_json = api_post_contrato.json()["contratoCadastro"]
+                                    for item in api_post_numero_contrato_json[0]["itensContrato"]:
+                                        if item["itemCabecalho"]["codServico"] == api_post_servico_json:
+                                            item["itemCabecalho"]["quant"] = i[5]
+                                        else:
+                                            falha.append({"cnpj_cpf": i[0], "contrato": i[4], "detalhe": "Não encontrado o item no contrato!", "etapa": "Buscar o item no contrato"})
+                                    contrato_cadastro.extend(api_post_numero_contrato_json)
+                                    omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
+                                else:
+                                    falha.append({"cnpj_cpf": i[0], "contrato": i[1], "detalhe": f"Não encontrado o contrato! \n {api_post_numero_contrato.text}", "etapa": "Buscar o contrato"})
+                        else:
+                            falha.append({"cnpj_cpj": i[0], "contrato": i[1], "detalhe": api_post_contrato.text, "etapa": "Buscar o contrato do cliente"})
+                    except Exception as ex:
+                        print(ex, i[0])
                 return falha
             else:
                 raise print("Não retornou dados da consulta SQL")

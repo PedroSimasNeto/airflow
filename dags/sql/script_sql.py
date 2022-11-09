@@ -247,7 +247,7 @@ def dimensoes_questor():
             """
             INSERT INTO CONJEL.QUESTOR_DIM_EMPRESA
             select 
-                "0" as codigoempresa, "1" as MARCADAGUAEMPRESA, "2" as NOMEEMPRESA, "3" as LOGOTIPOEMPRESA
+                "0" as codigoempresa, cast("1" as BYTEA) as MARCADAGUAEMPRESA, "2" as NOMEEMPRESA, cast("3" as BYTEA) as LOGOTIPOEMPRESA
             from staging.empresa;
             """
         ],

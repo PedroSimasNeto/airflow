@@ -256,4 +256,4 @@ def dimensoes_questor():
 
     fim = DummyOperator(task_id="fim")
 
-    inicio >> [task_periodocalculo, task_estab, task_funcpercalculo, task_usuario, task_funclocal, task_empresasegmento] >> fim
+    inicio >> [task_periodocalculo, task_estab, task_funcpercalculo, task_usuario, task_funclocal, task_empresasegmento, task_empresa] >> fim

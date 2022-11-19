@@ -112,7 +112,7 @@ class Jobs_conjel:
     def __init__(self, datalake):
         self.datalake_conn = datalake
 
-    def extract_data(self, conn_engine, connection, table, schema):
+    def extract_data(self, conn_engine: str, connection: dict, table: str, schema: str):
         # Conexão com o banco de dados
         engine = create_engine(f'{conn_engine}://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         # Registros na tabela

@@ -39,7 +39,7 @@ def importa_staging_sankhya(table: str):
     print(f"Importando staging {table}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
     # job.extract(conn_type="oracle", conn_read=cfg["conn_sankhya"], query=query, table=table, schema="staging")
-    job.extract_data(conn_engine="oracle+cx_Oracle", connection=cfg["conn_sankhya"], table=table, schema="staging")
+    job.extract_data(conn_engine="oracle+cx_oracle", connection=cfg["conn_sankhya"], table=table, schema="staging")
 
 
 with DAG("dag_conjel_v01",

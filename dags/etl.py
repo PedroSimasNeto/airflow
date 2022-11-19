@@ -117,11 +117,10 @@ class Jobs_conjel:
         connection = ut.obter_conn_uri(conn_read)
         engine = create_engine(f'{conn_engine}://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         # Registros na tabela
-        df_count = pd.read_sql_query(f"SELECT COUNT(1) FROM {table}", con=engine)
+        df_count = pd.read_sql_query(f"SELECT COUNT(1) as count FROM {table}", con=engine)
         # Query referente ao count
         query = f"SELECT * FROM {table}"
         # Numeros registros retornados
-        print(df_count)
         num_linhas = df_count["count"].item()
         # Condição para quando houver muitos registros
         if num_linhas >= 300000:

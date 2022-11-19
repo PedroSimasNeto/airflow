@@ -163,7 +163,7 @@ class Questor_OMIE:
             print(f"Os dados estão vazios: {ex}")
 
     def omie(self, data_competencia: str, url_contrato: str, url_servico: str, app_key: str, app_secret: str, codigo_servico: str):
-        query_folha = f"SELECT * FROM CONJEL.FATO_CALCULO_FOLHA where p.data_inicial_folha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'"
+        query_folha = f"SELECT * FROM CONJEL.FATO_CALCULO_FOLHA where data_inicial_folha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'"
         print(f"Executando a query que retornará a informação que será atualizada na API")
         consulta_folha = ut.read_pgsql(database_id=self.conn_datalake, query=query_folha)
         print(f"Consulta obteve {len(consulta_folha)} registros!")

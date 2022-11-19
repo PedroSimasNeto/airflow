@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from datetime import datetime
 import pandas as pd
 import utils as ut
+import json
 
 
 class Jobs_c8sgestao:
@@ -209,7 +210,7 @@ class Questor_OMIE:
                             falha.append({"cnpj_cpj": i[4], "contrato": i[1], "detalhe": api_post_contrato.text, "etapa": "Buscar o contrato do cliente"})
                     except Exception as ex:
                         print(ex, i[0])
-                return falha
+                return json.dumps(falha)
             else:
                 raise print("Não retornou dados da consulta SQL")
 

@@ -24,21 +24,22 @@ def importa_staging_tareffa(view: str):
     print(f"Importando staging {view}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
     query = f"SELECT * FROM conjel.{view}"
-    job.extract(conn_type="postgres", conn_read=cfg["conn_tareffa"], query=query, table=view, schema="staging")
+    # job.extract(conn_type="postgres", conn_read=cfg["conn_tareffa"], query=query, table=view, schema="staging")
+    job.extract_data(conn_engine="postgresql", connection=cfg["conn_tareffa"], table=view, schema="staging")
 
 
 def importa_staging_qualyteam(table: str):
     print(f"Importando staging {table}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
-    query = f"SELECT * FROM {table}"
-    job.extract(conn_type="mysql", conn_read=cfg["conn_qualyteam"], query=query, table=table, schema="staging")
+    # job.extract(conn_type="mysql", conn_read=cfg["conn_qualyteam"], query=query, table=table, schema="staging")
+    job.extract_data(conn_engine="mysql+mysqldb", connection=cfg["conn_qualyteam"], table=table, schema="staging")
 
 
 def importa_staging_sankhya(table: str):
     print(f"Importando staging {table}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
-    query = f"SELECT * FROM {table}"
-    job.extract(conn_type="oracle", conn_read=cfg["conn_sankhya"], query=query, table=table, schema="staging")
+    # job.extract(conn_type="oracle", conn_read=cfg["conn_sankhya"], query=query, table=table, schema="staging")
+    job.extract_data(conn_engine="oracle+cx_Oracle", connection=cfg["conn_sankhya"], table=table, schema="staging")
 
 
 with DAG("dag_conjel_v01",

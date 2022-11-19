@@ -11,6 +11,7 @@ import pandas.io.sql as psql
 import pandas as pd
 import utils as ut
 import json
+import math
 
 
 class Jobs_c8sgestao:
@@ -111,44 +112,54 @@ class Jobs_conjel:
     def __init__(self, datalake):
         self.datalake_conn = datalake
 
-    def extract_data_oracle(self, query, conn_engine) -> pd:
-        chunk_size = 10000
-        offset = 0
-        dfs = []
-        while True:
-            dfs.append(pd.read_sql_query(query, conn_engine))
-            offset += chunk_size
-            if len(dfs[-1]) < chunk_size:
-                break
-        full_df = pd.concat(dfs)
-        return full_df
+    def extract_data(self, conn_engine, connection, table, schema):
+        # Conexão com o banco de dados
+        engine = create_engine(f'{conn_engine}://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+        # Registros na tabela
+        df_count = pd.read_sql_query(f"SELECT COUNT(1) FROM {table}", con=engine)
+        # Query referente ao count
+        query = f"SELECT * FROM {table}"
+        # Condição para quando houver muitos registros
+        if df_count["count"].item() >= 300000:
+            total_por_pagina = 10000
+            num_linhas = df_count["count"].item()
+            total_paginas = math.ceil(num_linhas / total_por_pagina)
+            for i in range(1, total_paginas + 1):
+                print(f"pagina {i} de {total_paginas}")
+                limite_pagina = (i - 1) * 10000
+                query_exec_pagina = query + " OFFSET {} ROWS FETCH NEXT {} ROWS ONLY;".format(limite_pagina, 10000)
+                df = pd.read_sql_query(sql=query_exec_pagina, con=engine)
+                self.import_datalake(table=table, schema=schema, df_write=df)
+        else:
+            df = pd.read_sql_query(query, con=engine)
+            self.import_datalake(table=table, schema=schema, df_write=df)
 
-    def read_pd_sql(self, type, conn, query: str) -> pd:
-        try:
-            connection = ut.obter_conn_uri(conn)
-            if type == "postgres":
-                engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-                df = pd.read_sql_query(query, con=engine)
-                return df
-            if type == "mysql":
-                engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-                df = pd.read_sql_query(query, con=engine)
-                return df
-            if type == "oracle":
-                engine = create_engine(f'oracle+cx_oracle://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-                df = self.extract_data_oracle(query=query, conn_engine=engine)
-                return df
-            else:
-                raise print("Tipo inválido!")
-        except pd.errors.EmptyDataError as ex:
-            print(f"Os dados estão vazios: {ex}")
-        except Exception as ex:
-            print(f"Falha! Motivo: {ex}")
+    # def read_pd_sql(self, type, conn, query: str) -> pd:
+    #     try:
+    #         connection = ut.obter_conn_uri(conn)
+    #         if type == "postgres":
+    #             engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+    #             df = pd.read_sql_query(query, con=engine)
+    #             return df
+    #         if type == "mysql":
+    #             engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+    #             df = pd.read_sql_query(query, con=engine)
+    #             return df
+    #         if type == "oracle":
+    #             engine = create_engine(f'oracle+cx_oracle://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+    #             df = self.extract_data_oracle(query=query, conn_engine=engine)
+    #             return df
+    #         else:
+    #             raise print("Tipo inválido!")
+    #     except pd.errors.EmptyDataError as ex:
+    #         print(f"Os dados estão vazios: {ex}")
+    #     except Exception as ex:
+    #         print(f"Falha! Motivo: {ex}")
 
-    def extract(self, conn_type, conn_read, query: str, table: str, schema: str):
+    def import_datalake(self, table: str, schema: str, df_write: pd):
         connection = ut.obter_conn_uri(self.datalake_conn)
         engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        self.read_pd_sql(type=conn_type, conn=conn_read, query=query).to_sql(table, engine, schema=schema, if_exists="replace", index=False)
+        df_write.to_sql(table, engine, schema=schema, if_exists="replace", index=False)
 
 
 class Questor_OMIE:

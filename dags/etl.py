@@ -120,10 +120,12 @@ class Jobs_conjel:
         df_count = pd.read_sql_query(f"SELECT COUNT(1) FROM {table}", con=engine)
         # Query referente ao count
         query = f"SELECT * FROM {table}"
+        # Numeros registros retornados
+        print(df_count)
+        num_linhas = df_count["count"].item()
         # Condição para quando houver muitos registros
-        if df_count["count"].item() >= 300000:
+        if num_linhas >= 300000:
             total_por_pagina = 10000
-            num_linhas = df_count["count"].item()
             total_paginas = math.ceil(num_linhas / total_por_pagina)
             for i in range(1, total_paginas + 1):
                 print(f"pagina {i} de {total_paginas}")

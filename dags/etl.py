@@ -7,6 +7,7 @@ from airflow.models import Variable
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
 from datetime import datetime
+import pandas.io.sql as psql
 import pandas as pd
 import utils as ut
 import json
@@ -110,22 +111,32 @@ class Jobs_conjel:
     def __init__(self, datalake):
         self.datalake_conn = datalake
 
+    def extract_data_oracle(self, query, conn_engine) -> pd:
+        chunk_size = 10000
+        offset = 0
+        dfs = []
+        while True:
+            dfs.append(pd.read_sql_query(query, conn_engine))
+            offset += chunk_size
+            if len(dfs[-1]) < chunk_size:
+                break
+        full_df = pd.concat(dfs)
+        return full_df
+
     def read_pd_sql(self, type, conn, query: str) -> pd:
         try:
+            connection = ut.obter_conn_uri(conn)
             if type == "postgres":
-                connection = ut.obter_conn_uri(conn)
                 engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
                 df = pd.read_sql_query(query, con=engine)
                 return df
             if type == "mysql":
-                connection = ut.obter_conn_uri(conn)
                 engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
                 df = pd.read_sql_query(query, con=engine)
                 return df
             if type == "oracle":
-                connection = ut.obter_conn_uri(conn)
                 engine = create_engine(f'oracle+cx_oracle://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-                df = pd.read_sql_query(query, con=engine)
+                df = self.extract_data_oracle(query=query, conn_engine=engine)
                 return df
             else:
                 raise print("Tipo inválido!")

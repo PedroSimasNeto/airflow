@@ -186,10 +186,10 @@ def api(method, url, headers, json=None):
         :param headers: Dados de autorização para consultar API
     """
     response = requests.request(method=method, url=url, headers=headers, json=json)
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        raise print("Falhou ao retornar API", e)
+    # try:
+    #     response.raise_for_status()
+    # except requests.exceptions.HTTPError as e:
+    #     raise print("Falhou ao retornar API", e)
     return response
 
 

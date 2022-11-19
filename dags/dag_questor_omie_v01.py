@@ -65,6 +65,6 @@ with DAG("dag_questor_omie_v01",
         python_callable=_processamento_api
     )
 
-    # task_fato_calculo = fato_calculo_folha(" {{ next_ds }}")
+    task_fato_calculo = fato_calculo_folha()
 
-    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_processamento_api >> fim
+    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo >> task_processamento_api >> fim

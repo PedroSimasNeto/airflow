@@ -129,7 +129,7 @@ class Jobs_conjel:
             for i in range(1, total_paginas + 1):
                 print(f"pagina {i} de {total_paginas}")
                 limite_pagina = (i - 1) * 10000
-                query_exec_pagina = query + " OFFSET {} ROWS FETCH NEXT {} ROWS ONLY;".format(limite_pagina, 10000)
+                query_exec_pagina = query + " OFFSET {} ROWS FETCH NEXT {} ROWS ONLY".format(limite_pagina, 10000)
                 df = pd.read_sql_query(sql=query_exec_pagina, con=engine)
                 self.import_datalake(table=table, schema=schema, df_write=df)
         else:

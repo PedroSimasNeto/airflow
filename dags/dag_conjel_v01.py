@@ -23,7 +23,7 @@ cfg = Variable.get("cfg_conjel", deserialize_json=True)
 def importa_staging_tareffa(view: str):
     print(f"Importando staging {view}")
     job = Jobs_conjel(datalake=cfg["conn_datalake"])
-    job.extract_data(conn_engine="postgresql", conn_read=cfg["conn_tareffa"], table="conjel" + view, schema="staging")
+    job.extract_data(conn_engine="postgresql", conn_read=cfg["conn_tareffa"], table="conjel." + view, schema="staging")
 
 
 def importa_staging_qualyteam(table: str):

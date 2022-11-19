@@ -5,10 +5,11 @@ Created on Mon Nov 11 19:00:00 2022
 """
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.models import Variable
-from sql.script_sql import dimensoes_questor, fato_calculo_folha
+from sql.script_sql import dimensoes_questor
 from datetime import datetime
 from etl import Questor_OMIE
 
@@ -65,6 +66,40 @@ with DAG("dag_questor_omie_v01",
         python_callable=_processamento_api
     )
 
-    task_fato_calculo = fato_calculo_folha()
+    task_fato_calculo_folha = PostgresOperator(
+        task_id="fato_calculo_folha",
+        postgres_conn_id="postgres-datalake",
+        sql=["DELETE FROM CONJEL.FATO_CALCULO_FOLHA WHERE DATA_PROCESSAMENTO = CURRENT_DATE",
+            """
+            INSERT INTO CONJEL.FATO_CALCULO_FOLHA
+            SELECT
+                current_date as data_processamento,
+                datainicialfolha,
+                e.nomeempresa as empresa,
+                substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for 10) as contrato,
+                substring(observacaosegmento from position('CNPJ:' in observacaosegmento) +5) as cnpj,
+                count(distinct (c.codigofunccontr)) as folhas_apuradas
+            from CONJEL.QUESTOR_DIM_funcpercalculo c
+            inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
+                                                          and p.codigopercalculo = c.codigopercalculo
+            inner join (select codigoempresa as codemp,
+                            codigofunccontr as codfunc,
+                            max (datatransf) as datafunc
+                        from CONJEL.QUESTOR_DIM_funclocal
+                        group by 1,2) h on h.codemp = c.codigoempresa
+                                       and h.codfunc = c.codigofunccontr
+            inner join CONJEL.QUESTOR_DIM_funclocal l on l.codigoempresa = c.codigoempresa
+                                                     and l.codigofunccontr = c.codigofunccontr
+                                                     and l.datatransf = h.datafunc    
+            inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = c.codigoempresa
+            inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
+            inner join CONJEL.QUESTOR_DIM_empresasegmento es on es.codigoempresa = c.codigoempresa 
+                                                            and es.CODIGOSEGMENTO in (19)
+                                                            and es.datafimsegmento is null
+            where p.datainicialfolha = date_trunc('Month', cast('{{ params.data_competencia }}' as date)) - interval '1 Month'
+            group by 1,2,3,4,5
+        """],
+        parameters={"data_competencia": "{{ next_ds }}"}
+    )
 
-    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo >> task_processamento_api >> fim
+    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo_folha >> task_processamento_api >> fim

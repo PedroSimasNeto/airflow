@@ -8,7 +8,7 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.models import Variable
-from sql.script_sql import dimensoes_questor
+from sql.script_sql import dimensoes_questor, fato_calculo_folha
 from datetime import datetime
 from etl import Questor_OMIE
 
@@ -42,6 +42,8 @@ with DAG("dag_questor_omie_v01",
          catchup=False) as dag:
 
     inicio = DummyOperator(task_id="inicio")
+    staging = DummyOperator(task_id="staging")
+    dimensoes = DummyOperator(task_id="dimensoes")
     fim = DummyOperator(task_id="fim")
 
     with TaskGroup("staging") as task_group_questor:
@@ -63,4 +65,6 @@ with DAG("dag_questor_omie_v01",
         python_callable=_processamento_api
     )
 
-    inicio >> task_group_questor >> task_dimensoes >> task_processamento_api >> fim
+    task_fato_calculo = fato_calculo_folha(" {{ next_ds }}")
+
+    inicio >> staging >> task_group_questor >> dimensoes >> task_dimensoes >> task_fato_calculo >> task_processamento_api >> fim

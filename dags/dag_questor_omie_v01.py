@@ -66,11 +66,13 @@ with DAG("dag_questor_omie_v01",
         python_callable=_processamento_api
     )
 
+    data_competencia = "{{ next_ds }}"
+
     task_fato_calculo_folha = PostgresOperator(
         task_id="fato_calculo_folha",
         postgres_conn_id="postgres-datalake",
         sql=["DELETE FROM CONJEL.FATO_CALCULO_FOLHA WHERE DATA_PROCESSAMENTO = CURRENT_DATE",
-            """
+            f"""
             INSERT INTO CONJEL.FATO_CALCULO_FOLHA
             SELECT
                 current_date as data_processamento,
@@ -96,10 +98,9 @@ with DAG("dag_questor_omie_v01",
             inner join CONJEL.QUESTOR_DIM_empresasegmento es on es.codigoempresa = c.codigoempresa 
                                                             and es.CODIGOSEGMENTO in (19)
                                                             and es.datafimsegmento is null
-            where p.datainicialfolha = date_trunc('Month', cast('{{ params.data_competencia }}' as date)) - interval '1 Month'
+            where p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
             group by 1,2,3,4,5
-        """],
-        parameters={"data_competencia": "{{ next_ds }}"}
+        """]
     )
 
     inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo_folha >> task_processamento_api >> fim

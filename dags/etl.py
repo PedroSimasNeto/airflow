@@ -201,13 +201,13 @@ class Questor_OMIE:
                                         if item["itemCabecalho"]["codServico"] == api_post_servico_json:
                                             item["itemCabecalho"]["quant"] = i[5]
                                         else:
-                                            falha.append({"cnpj_cpf": i[4], "contrato": i[4], "detalhe": "Não encontrado o item no contrato!", "etapa": "Buscar o item no contrato"})
+                                            falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": "Não encontrado o item no contrato!", "etapa": "Buscar o item no contrato"})
                                     contrato_cadastro.extend(api_post_numero_contrato_json)
                                     omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
                                 else:
-                                    falha.append({"cnpj_cpf": i[4], "contrato": i[1], "detalhe": f"Não encontrado o contrato! \n {api_post_numero_contrato.text}", "etapa": "Buscar o contrato"})
+                                    falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": f"Não encontrado o contrato! \n {api_post_numero_contrato.text}", "etapa": "Buscar o contrato"})
                         else:
-                            falha.append({"cnpj_cpj": i[4], "contrato": i[1], "detalhe": api_post_contrato.text, "etapa": "Buscar o contrato do cliente"})
+                            falha.append({"cnpj_cpj": i[4], "contrato": i[3], "detalhe": api_post_contrato.text, "etapa": "Buscar o contrato do cliente"})
                     except Exception as ex:
                         print(ex, i[0])
                 return json.dumps(falha)

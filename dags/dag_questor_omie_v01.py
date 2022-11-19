@@ -71,7 +71,7 @@ with DAG("dag_questor_omie_v01",
     task_fato_calculo_folha = PostgresOperator(
         task_id="fato_calculo_folha",
         postgres_conn_id="postgres-datalake",
-        sql=["DELETE FROM CONJEL.FATO_CALCULO_FOLHA WHERE DATA_PROCESSAMENTO = CURRENT_DATE",
+        sql=[f"DELETE FROM CONJEL.FATO_CALCULO_FOLHA WHERE (DATA_PROCESSAMENTO = CURRENT_DATE OR data_inicial_folha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month')",
             f"""
             INSERT INTO CONJEL.FATO_CALCULO_FOLHA
             SELECT

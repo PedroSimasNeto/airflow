@@ -112,8 +112,9 @@ class Jobs_conjel:
     def __init__(self, datalake):
         self.datalake_conn = datalake
 
-    def extract_data(self, conn_engine: str, connection: dict, table: str, schema: str):
+    def extract_data(self, conn_engine: str, conn_read: str, table: str, schema: str):
         # Conexão com o banco de dados
+        connection = ut.obter_conn_uri(conn_read)
         engine = create_engine(f'{conn_engine}://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
         # Registros na tabela
         df_count = pd.read_sql_query(f"SELECT COUNT(1) FROM {table}", con=engine)
@@ -133,28 +134,6 @@ class Jobs_conjel:
         else:
             df = pd.read_sql_query(query, con=engine)
             self.import_datalake(table=table, schema=schema, df_write=df)
-
-    # def read_pd_sql(self, type, conn, query: str) -> pd:
-    #     try:
-    #         connection = ut.obter_conn_uri(conn)
-    #         if type == "postgres":
-    #             engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-    #             df = pd.read_sql_query(query, con=engine)
-    #             return df
-    #         if type == "mysql":
-    #             engine = create_engine(f'mysql+mysqldb://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-    #             df = pd.read_sql_query(query, con=engine)
-    #             return df
-    #         if type == "oracle":
-    #             engine = create_engine(f'oracle+cx_oracle://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-    #             df = self.extract_data_oracle(query=query, conn_engine=engine)
-    #             return df
-    #         else:
-    #             raise print("Tipo inválido!")
-    #     except pd.errors.EmptyDataError as ex:
-    #         print(f"Os dados estão vazios: {ex}")
-    #     except Exception as ex:
-    #         print(f"Falha! Motivo: {ex}")
 
     def import_datalake(self, table: str, schema: str, df_write: pd):
         connection = ut.obter_conn_uri(self.datalake_conn)

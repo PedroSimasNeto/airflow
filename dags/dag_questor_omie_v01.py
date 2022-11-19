@@ -42,11 +42,11 @@ with DAG("dag_questor_omie_v01",
          catchup=False) as dag:
 
     inicio = DummyOperator(task_id="inicio")
-    staging = DummyOperator(task_id="staging")
-    dimensoes = DummyOperator(task_id="dimensoes")
+    dummy_staging = DummyOperator(task_id="staging")
+    dummy_dimensoes = DummyOperator(task_id="dimensoes")
     fim = DummyOperator(task_id="fim")
 
-    with TaskGroup("staging") as task_group_questor:
+    with TaskGroup("criar_staging") as task_group_questor:
         task_questor = []
         for t in cfg["tabelas"]:
             task_questor.append(PythonOperator(
@@ -57,7 +57,7 @@ with DAG("dag_questor_omie_v01",
                 }
             ))
 
-    with TaskGroup("dimensoes") as task_dimensoes:
+    with TaskGroup("criar_dimensoes") as task_dimensoes:
         dimensoes_questor()
 
     task_processamento_api = PythonOperator(
@@ -67,4 +67,4 @@ with DAG("dag_questor_omie_v01",
 
     task_fato_calculo = fato_calculo_folha(" {{ next_ds }}")
 
-    inicio >> staging >> task_group_questor >> dimensoes >> task_dimensoes >> task_fato_calculo >> task_processamento_api >> fim
+    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo >> task_processamento_api >> fim

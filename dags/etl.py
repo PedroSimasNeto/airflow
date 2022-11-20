@@ -127,12 +127,12 @@ class Jobs_conjel:
         num_linhas = df_count["count"].item()
         # Condição para quando houver muitos registros
         if num_linhas >= 300000:
-            total_por_pagina = 10000
+            total_por_pagina = 50000
             total_paginas = math.ceil(num_linhas / total_por_pagina)
             for pagina in range(1, total_paginas + 1):
                 print(f"pagina {pagina} de {total_paginas}")
-                limite_pagina = (pagina - 1) * 10000
-                query_exec_pagina = query + " OFFSET {} ROWS FETCH NEXT {} ROWS ONLY".format(limite_pagina, 10000)
+                limite_pagina = (pagina - 1) * total_por_pagina
+                query_exec_pagina = query + f" OFFSET {limite_pagina} ROWS FETCH NEXT {total_por_pagina} ROWS ONLY"
                 df = pd.read_sql_query(sql=query_exec_pagina, con=engine)
                 # Condição para o primeiro registro recriar a estrutura da tabela novamente
                 if pagina == 1:

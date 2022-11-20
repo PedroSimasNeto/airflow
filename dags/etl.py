@@ -113,9 +113,12 @@ class Jobs_conjel:
         self.datalake_conn = datalake
 
     def extract_data(self, conn_engine: str, conn_read: str, table: str, schema: str):
-        # Conexão com o banco de dados
+        # Conexão com o banco de dados de leitura
         connection = ut.obter_conn_uri(conn_read)
         engine = create_engine(f'{conn_engine}://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
+        # Conexão com o banco de dados de escrita
+        connect_datalake = ut.obter_conn_uri(self.datalake_conn)
+        engine_datalake = create_engine(f'postgresql://{connect_datalake["user"]}:{connect_datalake["password"]}@{connect_datalake["host"]}:{connect_datalake["port"]}/{connect_datalake["schema"]}')
         # Registros na tabela
         df_count = pd.read_sql_query(f"SELECT COUNT(1) as count FROM {table}", con=engine)
         # Query referente ao count
@@ -126,20 +129,19 @@ class Jobs_conjel:
         if num_linhas >= 300000:
             total_por_pagina = 10000
             total_paginas = math.ceil(num_linhas / total_por_pagina)
-            for i in range(1, total_paginas + 1):
-                print(f"pagina {i} de {total_paginas}")
-                limite_pagina = (i - 1) * 10000
+            for pagina in range(1, total_paginas + 1):
+                print(f"pagina {pagina} de {total_paginas}")
+                limite_pagina = (pagina - 1) * 10000
                 query_exec_pagina = query + " OFFSET {} ROWS FETCH NEXT {} ROWS ONLY".format(limite_pagina, 10000)
                 df = pd.read_sql_query(sql=query_exec_pagina, con=engine)
-                self.import_datalake(table=table, schema=schema, df_write=df)
+                # Condição para o primeiro registro recriar a estrutura da tabela novamente
+                if pagina == 1:
+                    df.to_sql(table, engine_datalake, schema=schema, if_exists="replace", index=False)
+                else:
+                    df.to_sql(table, engine_datalake, schema=schema, if_exists="append", index=False)
         else:
             df = pd.read_sql_query(query, con=engine)
-            self.import_datalake(table=table, schema=schema, df_write=df)
-
-    def import_datalake(self, table: str, schema: str, df_write: pd):
-        connection = ut.obter_conn_uri(self.datalake_conn)
-        engine = create_engine(f'postgresql://{connection["user"]}:{connection["password"]}@{connection["host"]}:{connection["port"]}/{connection["schema"]}')
-        df_write.to_sql(table, engine, schema=schema, if_exists="replace", index=False)
+            df.to_sql(table, engine_datalake, schema=schema, if_exists="append", index=False)
 
 
 class Questor_OMIE:

@@ -141,7 +141,7 @@ class Jobs_conjel:
                     df.to_sql(table, engine_datalake, schema=schema, if_exists="append", index=False)
         else:
             df = pd.read_sql_query(query, con=engine)
-            df.to_sql(table, engine_datalake, schema=schema, if_exists="append", index=False)
+            df.to_sql(table, engine_datalake, schema=schema, if_exists="replace", index=False)
 
 
 class Questor_OMIE:

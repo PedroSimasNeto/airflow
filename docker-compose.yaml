@@ -58,6 +58,16 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+    ## Mensagem no UI do Airflow
+    AIRFLOW__WEBSERVER__INSTANCE_NAME: 'Airflow Conjel'
+    ## Configurações referentes ao SMTP
+    AIRFLOW__SMTP__SMTP_SSL: 'true'
+    ## Configurações referente ao timezone
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo" ## Define o Time Zone do Airflow
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "America/Sao_Paulo" ## Define o Time Zone da interface do Airflow
+    ## Configurações referente a segurança
+    AIRFLOW__CORE__SECURE_MODE: "True" ## Configura o Airflow em modo seguro, desabilitando algumas features como Charts e Ad Hoc Queries.
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "False" ## Oculta o arquivo de configuração na interface do Airflow
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
     - ./dags:/opt/airflow/dags

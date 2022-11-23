@@ -78,7 +78,7 @@ with DAG("dag_questor_omie_v01",
                 current_date as data_processamento,
                 datainicialfolha,
                 e.nomeempresa as empresa,
-                substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for 10) as contrato,
+                substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for position(',' in observacaosegmento) - 10) as contrato,
                 substring(observacaosegmento from position('CNPJ:' in observacaosegmento) +5) as cnpj,
                 count(distinct (c.codigofunccontr)) as folhas_apuradas
             from CONJEL.QUESTOR_DIM_funcpercalculo c

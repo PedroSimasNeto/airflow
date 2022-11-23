@@ -83,18 +83,8 @@ with DAG("dag_questor_omie_v01",
                 count(distinct (c.codigofunccontr)) as folhas_apuradas
             from CONJEL.QUESTOR_DIM_funcpercalculo c
             inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
-                                                          and p.codigopercalculo = c.codigopercalculo
-            inner join (select codigoempresa as codemp,
-                            codigofunccontr as codfunc,
-                            max (datatransf) as datafunc
-                        from CONJEL.QUESTOR_DIM_funclocal
-                        group by 1,2) h on h.codemp = c.codigoempresa
-                                       and h.codfunc = c.codigofunccontr
-            inner join CONJEL.QUESTOR_DIM_funclocal l on l.codigoempresa = c.codigoempresa
-                                                     and l.codigofunccontr = c.codigofunccontr
-                                                     and l.datatransf = h.datafunc    
+                                                          and p.codigopercalculo = c.codigopercalculo   
             inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = c.codigoempresa
-            inner join CONJEL.QUESTOR_DIM_usuario u on u.codigousuario = c.codigousuario
             inner join CONJEL.QUESTOR_DIM_empresasegmento es on es.codigoempresa = c.codigoempresa 
                                                             and es.CODIGOSEGMENTO in (19)
                                                             and es.datafimsegmento is null

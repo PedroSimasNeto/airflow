@@ -135,7 +135,7 @@ def dimensoes_questor():
                 cast("18" as integer) as CODIGOSINDDISSIDIOEMP, "19" as FECHADO, "20" as DATA_EXECUCAO
             from staging.periodocalculo p
             /* Esse filtro buscará somente o último cálculo da folha */
-            where "1" = (select max("1") from staging.periodocalculo);
+            where "1" in (select max("1") from staging.periodocalculo group by "0");
             """],
         autocommit=True
     )

@@ -156,7 +156,7 @@ def dimensoes_questor():
                 "28" as GERARESOCIAL, "29" as GEROUTRANSACAOESOCIAL1210, "30" as SEQFUNCSALARIO, "31" as DATA_EXECUCAO
             from staging.funcpercalculo
             /* Esse filtro buscará somente o último cálculo da folha */
-            where "1" = (select max("1") from staging.funcpercalculo);
+            where "1" = (select max("1") from staging.funcpercalculo group by "0", "2");
             """],
         autocommit=True
     )

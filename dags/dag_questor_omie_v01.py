@@ -85,7 +85,7 @@ with DAG("dag_questor_omie_v01",
             from CONJEL.QUESTOR_DIM_empresasegmento es
             inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = es.codigoempresa
             left join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = e.codigoempresa
-                                                         and p.datainicialfolha = date_trunc('Month', cast({data_competencia} as date)) - interval '1 Month'
+                                                         and p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
             left join CONJEL.QUESTOR_DIM_funcpercalculo c on c.codigoempresa = p.codigoempresa
                                                          and c.codigopercalculo = p.codigopercalculo
             where es.CODIGOSEGMENTO in (19)

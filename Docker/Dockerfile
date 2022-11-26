@@ -36,4 +36,5 @@ RUN pip install --no-cache-dir \
   apache-airflow[oracle]==2.3.2 \
   apache-airflow[microsoft.mssql]==2.3.2 \
   cx_Oracle==8.3.0 \
-  firebirdsql==1.2.2
+  firebirdsql==1.2.2 \
+  openpyxl==3.0.10

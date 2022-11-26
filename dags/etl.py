@@ -233,19 +233,3 @@ class Questor_OMIE:
                 raise print("Não retornou dados da consulta SQL")
 
         return processamento_api()
-
-    def envia_diagnostico_email(ti):
-        atualizado = ti.xcom_pull(task_ids="processamento_api", key="atualizado")
-        falha = ti.xcom_pull(task_ids="processamento_api", key="falha")
-        pd.DataFrame(atualizado).to_excel(r"/opt/airflow/dags/api_atualizado.xlsx", index=False)
-        pd.DataFrame(falha).to_excel(r"/opt/airflow/dags/api_falha.xlsx", index=False)
-
-        task_email = EmailOperator(
-            task_id="email",
-            to="pedros.itj@gmail.com",
-            subject="Teste e-mail",
-            html_content="Teste de e-mail",
-            files=["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx"]
-        )
-
-        return task_email.execute(ti)

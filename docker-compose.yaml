@@ -61,7 +61,13 @@ x-airflow-common:
     ## Mensagem no UI do Airflow
     AIRFLOW__WEBSERVER__INSTANCE_NAME: 'Airflow Conjel'
     ## Configurações referentes ao SMTP
-    AIRFLOW__SMTP__SMTP_SSL: 'true'
+    ## Configurações referentes ao SMTP
+    AIRFLOW__SMTP__SMTP_HOST: "smtp.gmail.com"
+    AIRFLOW__SMTP__SMTP_STARTTLS: "false"
+    AIRFLOW__SMTP__SMTP_SSL: "true"
+    AIRFLOW__SMTP__SMTP_PORT: "465"
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: "suporte@conjel.com.br"
+    AIRFLOW__EMAIL__EMAIL_BACKEND: "airflow.utils.email.send_email_smtp"
     ## Configurações referente ao timezone
     AIRFLOW__CORE__DEFAULT_TIMEZONE: "America/Sao_Paulo" ## Define o Time Zone do Airflow
     AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: "America/Sao_Paulo" ## Define o Time Zone da interface do Airflow

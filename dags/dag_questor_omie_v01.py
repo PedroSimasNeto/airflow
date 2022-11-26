@@ -80,15 +80,16 @@ with DAG("dag_questor_omie_v01",
                 e.nomeempresa as empresa,
                 substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for position(',' in observacaosegmento) - 10) as contrato,
                 substring(observacaosegmento from position('CNPJ:' in observacaosegmento) +5) as cnpj,
-                count(distinct (c.codigofunccontr)) as folhas_apuradas
-            from CONJEL.QUESTOR_DIM_funcpercalculo c
-            inner join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = c.codigoempresa
-                                                          and p.codigopercalculo = c.codigopercalculo   
-            inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = c.codigoempresa
-            inner join CONJEL.QUESTOR_DIM_empresasegmento es on es.codigoempresa = c.codigoempresa 
-                                                            and es.CODIGOSEGMENTO in (19)
-                                                            and es.datafimsegmento is null
-            where p.datainicialfolha = date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'
+                case when count(distinct (c.codigofunccontr)) < 2 then 2
+                    else count(distinct (c.codigofunccontr)) end as folhas_apuradas
+            from CONJEL.QUESTOR_DIM_empresasegmento es
+            inner join CONJEL.QUESTOR_DIM_empresa e on e.codigoempresa = es.codigoempresa
+            left join CONJEL.QUESTOR_DIM_periodocalculo p on p.codigoempresa = e.codigoempresa
+                                                         and p.datainicialfolha = date_trunc('Month', cast({data_competencia} as date)) - interval '1 Month'
+            left join CONJEL.QUESTOR_DIM_funcpercalculo c on c.codigoempresa = p.codigoempresa
+                                                         and c.codigopercalculo = p.codigopercalculo
+            where es.CODIGOSEGMENTO in (19)
+              and es.datafimsegmento is null
             group by 1,2,3,4,5
         """]
     )

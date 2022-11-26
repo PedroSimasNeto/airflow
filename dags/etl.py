@@ -186,7 +186,7 @@ class Questor_OMIE:
 
         def processamento_api():
             print("Iniciando processamento da API!")
-            contrato_cadastro = []
+            atualizado = []
             falha = []
 
             if consulta_folha:
@@ -197,24 +197,37 @@ class Questor_OMIE:
                     try:
                         if api_post_contrato.status_code == 200:
                             api_post_json = api_post_contrato.json()["contratoCadastro"]
+                            contrato_filtrado = []
                             for cabecalho in api_post_json:
                                 api_post_numero_contrato = omie_api(url_contrato, data_call="ConsultarContrato", parametros=[{"contratoChave": {"nCodCtr": cabecalho["cabecalho"]["nCodCtr"]}}])
-                                if api_post_numero_contrato.status_code == 200 and api_post_numero_contrato.json()["contratoCadastro"]["cabecalho"]["cNumCtr"] == i[3]:
-                                    api_post_numero_contrato_json = api_post_contrato.json()["contratoCadastro"]
-                                    for item in api_post_numero_contrato_json[0]["itensContrato"]:
-                                        if item["itemCabecalho"]["codServico"] == api_post_servico_json:
-                                            item["itemCabecalho"]["quant"] = i[5]
-                                        else:
-                                            falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": "Não encontrado o item no contrato!", "etapa": "Buscar o item no contrato"})
-                                    contrato_cadastro.extend(api_post_numero_contrato_json)
-                                    omie_api(url=url_contrato, data_call="AlterarContrato", parametros=contrato_cadastro)
+                                if api_post_numero_contrato.status_code == 200:
+                                    if api_post_numero_contrato.json()["contratoCadastro"]["cabecalho"]["cNumCtr"] == i[3]:
+                                        contrato_filtrado.append({"cabecalho": api_post_numero_contrato.json()["contratoCadastro"]["cabecalho"],
+                                                                "itensContrato": api_post_numero_contrato.json()["contratoCadastro"]["itensContrato"],
+                                                                "infAdic": api_post_numero_contrato.json()["contratoCadastro"]["infAdic"]})
                                 else:
-                                    falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": f"Não encontrado o contrato! \n {api_post_numero_contrato.text}", "etapa": "Buscar o contrato"})
+                                    falha.append({"cnpj_cpf": i[4], "contrato": cabecalho["cabecalho"]["cNumCtr"], 
+                                                  "detalhe": f"Não encontrado o contrato! \n {api_post_numero_contrato.text}", "etapa": "Buscar o contrato"})
+                            if contrato_filtrado:
+                                api_post_numero_contrato_json = contrato_filtrado[0]
+                                for item in api_post_numero_contrato_json["itensContrato"]:
+                                    if "itemOutrasInf" in item:
+                                        del item["itemOutrasInf"]
+                                    if item["itemCabecalho"]["codServico"] == api_post_servico_json:
+                                        item["itemCabecalho"]["quant"] = i[5]
+                                        if "itemOutrasInf" in item:
+                                            del item["itemOutrasInf"]
+                                omie_api(url=url_contrato, data_call="UpsertContrato", parametros=[api_post_numero_contrato_json])
+                                atualizado.append({"cnpj_cpf": i[4], "contrato": i[3], "folhas": i[5]})
+                                if next((item for item in atualizado if item["cnpj_cpf"] == i[4]), None) is None:
+                                    falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": "Não encontrado o item no contrato!", "etapa": "Buscar o item no contrato"})
+                            if next((item for item in atualizado if item["cnpj_cpf"] == i[4]), None) is None:
+                                falha.append({"cnpj_cpf": i[4], "contrato": i[3], "detalhe": "Não encontrado o contrato!", "etapa": "Buscar o contrato"})
                         else:
                             falha.append({"cnpj_cpj": i[4], "contrato": i[3], "detalhe": api_post_contrato.text, "etapa": "Buscar o contrato do cliente"})
                     except Exception as ex:
                         print(ex, i[0])
-                return json.dumps(falha)
+                return {"atualizado": atualizado, "falha": falha}
             else:
                 raise print("Não retornou dados da consulta SQL")
 

@@ -35,6 +35,11 @@ def _processamento_api(**kwargs):
     return omie_api
 
 
+def _salvar_dados_api(**kwargs):
+    job = Questor_OMIE()
+    job.envia_diagnostico_email(kwargs)
+
+
 with DAG("dag_questor_omie_v01",
          description="Processamento Questor para OMIE",
          default_args=default_args, 
@@ -94,4 +99,9 @@ with DAG("dag_questor_omie_v01",
         """]
     )
 
-    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo_folha >> task_processamento_api >> fim
+    task_email = PythonOperator(
+        task_id="email",
+        python_callable=_salvar_dados_api
+    )
+
+    inicio >> dummy_staging >> task_group_questor >> dummy_dimensoes >> task_dimensoes >> task_fato_calculo_folha >> task_processamento_api >> task_email >> fim

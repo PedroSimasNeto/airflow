@@ -4,6 +4,7 @@ Created on Mon Nov 11 19:00:00 2022
 @author: Pedro Simas Neto
 """
 from airflow import DAG
+from airflow.operators.email import EmailOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
@@ -12,6 +13,7 @@ from airflow.models import Variable
 from sql.script_sql import dimensoes_questor
 from datetime import datetime
 from etl import Questor_OMIE
+import pandas as pd
 
 default_args = {
     "owner": "Pedro Simas",
@@ -36,8 +38,20 @@ def _processamento_api(**kwargs):
 
 
 def _salvar_dados_api(**kwargs):
-    job = Questor_OMIE()
-    job.envia_diagnostico_email(ti=kwargs)
+    atualizado = " {{ ti.xcom_pull(task_ids='processamento_api', key='atualizado') }} "
+    falha =  " {{ ti.xcom_pull(task_ids='processamento_api', key='falha') }} "
+    pd.DataFrame(atualizado).to_excel(r"/opt/airflow/dags/api_atualizado.xlsx", index=False)
+    pd.DataFrame(falha).to_excel(r"/opt/airflow/dags/api_falha.xlsx", index=False)
+
+    task_email = EmailOperator(
+        task_id="email",
+        to="pedros.itj@gmail.com",
+        subject="Teste e-mail",
+        html_content="Teste de e-mail",
+        files=["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx"]
+    )
+
+    return task_email.execute(kwargs)
 
 
 with DAG("dag_questor_omie_v01",

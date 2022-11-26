@@ -76,7 +76,7 @@ with DAG("dag_questor_omie_v01",
             INSERT INTO CONJEL.FATO_CALCULO_FOLHA
             SELECT
                 current_date as data_processamento,
-                coalesce(datainicialfolha, cast('{data_competencia}' as date)),
+                coalesce(datainicialfolha, date_trunc('Month', cast('{data_competencia}' as date)) - interval '1 Month'),
                 e.nomeempresa as empresa,
                 substring(observacaosegmento from position('Contrato:' in observacaosegmento) +9 for position(',' in observacaosegmento) - 10) as contrato,
                 substring(observacaosegmento from position('CNPJ:' in observacaosegmento) +5) as cnpj,

@@ -38,8 +38,8 @@ def _processamento_api(**kwargs):
 
 
 def _salvar_dados_api(**kwargs):
-    atualizado = " {{ ti.xcom_pull(task_ids='processamento_api', key='atualizado') }} "
-    falha =  " {{ ti.xcom_pull(task_ids='processamento_api', key='falha') }} "
+    atualizado = kwargs["ti"].xcom_pull(task_ids='processamento_api', key='atualizado')
+    falha =  kwargs["ti"].xcom_pull(task_ids='processamento_api', key='falha')
     pd.DataFrame(atualizado).to_excel(r"/opt/airflow/dags/api_atualizado.xlsx", index=False)
     pd.DataFrame(falha).to_excel(r"/opt/airflow/dags/api_falha.xlsx", index=False)
 
@@ -80,11 +80,6 @@ with DAG("dag_questor_omie_v01",
     with TaskGroup("criar_dimensoes") as task_dimensoes:
         dimensoes_questor()
 
-    task_processamento_api = PythonOperator(
-        task_id="processamento_api",
-        python_callable=_processamento_api
-    )
-
     data_competencia = "{{ next_ds }}"
 
     task_fato_calculo_folha = PostgresOperator(
@@ -111,6 +106,11 @@ with DAG("dag_questor_omie_v01",
               and es.datafimsegmento is null
             group by 1,2,3,4,5
         """]
+    )
+
+    task_processamento_api = PythonOperator(
+        task_id="processamento_api",
+        python_callable=_processamento_api
     )
 
     task_email = PythonOperator(

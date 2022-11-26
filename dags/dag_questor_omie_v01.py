@@ -37,7 +37,7 @@ def _processamento_api(**kwargs):
 
 def _salvar_dados_api(**kwargs):
     job = Questor_OMIE()
-    job.envia_diagnostico_email(kwargs)
+    job.envia_diagnostico_email(ti=kwargs)
 
 
 with DAG("dag_questor_omie_v01",

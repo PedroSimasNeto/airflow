@@ -51,7 +51,7 @@ def _salvar_dados_api(**kwargs):
         to="pedros.itj@gmail.com",
         subject="Processamento folha OMIE",
         html_content=f"""
-        <html lang="en">
+        <html lang="pt-BR">
         <head>
             <title>Processamento OMIE</title>
         </head>

@@ -48,7 +48,7 @@ def _salvar_dados_api(**kwargs):
 
     task_email = EmailOperator(
         task_id="email",
-        to="pedros.itj@gmail.com",
+        to="pedros.itj@gmail.com, pedrosimasneto@hotmail.com",
         subject="Processamento folha OMIE",
         html_content=f"""
         <html lang="pt-BR">
@@ -57,8 +57,8 @@ def _salvar_dados_api(**kwargs):
         </head>
         <body>
 
-        <h1>Atualização cadastrados OMIE funcionários</h1>
-        <p>Olá, foi realizado o processamento na data {kwargs["next_ds"]}.</p>
+        <h1>Atualização contratos OMIE funcionários</h1>
+        <p>Olá, processamento realizado na data {kwargs["next_ds"]}.</p>
         <p>Foram atualizados <b>{len(atualizado)}</b> {'folhas' if len(atualizado) > 1 else 'folha'}!</p>
         <p>{'Não houve falha' if len(falha) == 0 else f'Houve falhas! Total de falhas: <b>{len(falha)}</b>'}.</p>
         

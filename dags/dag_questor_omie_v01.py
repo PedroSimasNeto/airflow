@@ -53,7 +53,7 @@ def _salvar_dados_api(**kwargs):
         Foram atualizados <b>{len(atualizado)}</b> {'folhas' if len(atualizado) > 1 else 'folha'}! \n
         {'Não houve falha' if len(falha) == 0 else 'Houve falhas! Total de falhas: '} <b>{len(falha)}</b>
         """,
-        files=["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx" if len(falha) == 0 else ""]
+        files=["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx" if len(falha) > 0 else ""]
     )
 
     return task_email.execute(kwargs)

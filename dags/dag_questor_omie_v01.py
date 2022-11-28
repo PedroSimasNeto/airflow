@@ -44,6 +44,8 @@ def _salvar_dados_api(**kwargs):
     pd.DataFrame(atualizado).to_excel(r"/opt/airflow/dags/api_atualizado.xlsx", index=False)
     pd.DataFrame(falha).to_excel(r"/opt/airflow/dags/api_falha.xlsx", index=False)
 
+    arquivo = ["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx"] if len(falha) > 0 else ["/opt/airflow/dags/api_atualizado.xlsx"]
+
     task_email = EmailOperator(
         task_id="email",
         to="pedros.itj@gmail.com",
@@ -53,7 +55,7 @@ def _salvar_dados_api(**kwargs):
         Foram atualizados <b>{len(atualizado)}</b> {'folhas' if len(atualizado) > 1 else 'folha'}! \n
         {'Não houve falha' if len(falha) == 0 else 'Houve falhas! Total de falhas: '} <b>{len(falha)}</b>
         """,
-        files=["/opt/airflow/dags/api_atualizado.xlsx", "/opt/airflow/dags/api_falha.xlsx" if len(falha) > 0 else None]
+        files=arquivo
     )
 
     return task_email.execute(kwargs)

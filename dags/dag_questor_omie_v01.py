@@ -11,17 +11,21 @@ from airflow.operators.dummy import DummyOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.models import Variable
 from sql.script_sql import dimensoes_questor
-from datetime import datetime
+from datetime import datetime, timedelta
 from etl import Questor_OMIE
 import pandas as pd
 
-default_args = {
-    "owner": "Pedro Simas",
-    "start_date": datetime(2022, 11, 1)
-}
-
 cfg = Variable.get("questor_omie", deserialize_json=True)
 cfg_omie_secrets = Variable.get("api_omie_secrets", deserialize_json=True)
+
+default_args = {
+    "owner": "Pedro Simas",
+    "start_date": datetime(2022, 11, 1),
+    "retries": 10,
+    "retry_delay": timedelta(minutes=5),
+    "email_on_failure": True,
+    "email": cfg["emails_alerta"]
+}
 
 
 def dados_questor(tabelas):
@@ -48,7 +52,7 @@ def _salvar_dados_api(**kwargs):
 
     task_email = EmailOperator(
         task_id="email",
-        to="pedros.itj@gmail.com, pedrosimasneto@hotmail.com",
+        to=cfg["emails_processamento"],
         subject="Processamento folha OMIE",
         html_content=f"""
         <html lang="pt-BR">

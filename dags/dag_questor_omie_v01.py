@@ -40,6 +40,8 @@ def _processamento_api(**kwargs):
 def _salvar_dados_api(**kwargs):
     atualizado = kwargs["ti"].xcom_pull(task_ids='processamento_api', key='atualizado')
     falha =  kwargs["ti"].xcom_pull(task_ids='processamento_api', key='falha')
+    print("Atualizado: ", atualizado)
+    print("Atualizado: ", falha)
     pd.DataFrame(atualizado).to_excel(r"/opt/airflow/dags/api_atualizado.xlsx", index=False)
     pd.DataFrame(falha).to_excel(r"/opt/airflow/dags/api_falha.xlsx", index=False)
 

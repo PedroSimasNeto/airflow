@@ -51,9 +51,19 @@ def _salvar_dados_api(**kwargs):
         to="pedros.itj@gmail.com",
         subject="Processamento folha OMIE",
         html_content=f"""
-        Olá! \n
-        Foram atualizados <b>{len(atualizado)}</b> {'folhas' if len(atualizado) > 1 else 'folha'}! \n
-        {'Não houve falha' if len(falha) == 0 else 'Houve falhas! Total de falhas: '} <b>{len(falha)}</b>
+        <html lang="en">
+        <head>
+            <title>Processamento OMIE</title>
+        </head>
+        <body>
+
+        <h1>Atualização cadastrados OMIE funcionários</h1>
+        <p>Olá, foi realizado o processamento na data {kwargs["next_ds"]}.</p>
+        <p>Foram atualizados <b>{len(atualizado)}</b> {'folhas' if len(atualizado) > 1 else 'folha'}!</p>
+        <p>{'Não houve falha' if len(falha) == 0 else 'Houve falhas! Total de falhas: '} <b>{len(falha)}.</b></p>
+        
+        </body>
+        </html>
         """,
         files=arquivo
     )
